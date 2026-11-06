@@ -9,7 +9,7 @@ const secret=env('BRIDGE_SECRET');
 const token=env('DISCORD_TOKEN');
 if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
 const dataFile=env('DATA_FILE','./bridge-data.json');
-let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]}};
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]},applicationRoles:[]};
 try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
 const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
@@ -62,12 +62,22 @@ if(req.method==='GET'&&url.pathname==='/health'){reply(res,200,{ok:true,discord:
 if(req.method==='GET'&&url.pathname==='/api/public/stats'){reply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt},origin);return;}
 if(req.method==='GET'&&url.pathname==='/api/public/leaderboards'){reply(res,200,{leaderboards:db.leaderboards,updatedAt:db.updatedAt},origin);return;}
 if(req.method==='GET'&&url.pathname==='/api/public/level-shop'){reply(res,200,{shop:db.levelShop,updatedAt:db.updatedAt},origin);return;}
+if(req.method==='GET'&&url.pathname==='/api/public/application-roles'){
+reply(res,200,{roles:db.applicationRoles,updatedAt:db.updatedAt},origin);return;
+}
 if(url.pathname.startsWith('/api/server/')){
 if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
 if(req.method==='POST'&&url.pathname==='/api/server/sync'){
 try{const obj=await body(req);if(!Array.isArray(obj.players)||obj.players.length>250){reply(res,400,{error:'Invalid players'},origin);return;}
 db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,levels:Math.max(0,Number(p.levels)||0),rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
 db.online=db.players.length;db.updatedAt=new Date().toISOString();
+if(Array.isArray(obj.applicationRoles)){
+ const seen=new Set();
+ db.applicationRoles=obj.applicationRoles.slice(0,150).map(role=>({id:clean(role?.id,40),name:safeText(role?.name,60)}))
+  .filter(role=>/^[A-Za-z0-9 _-]{2,40}$/.test(role.id)&&role.name.length>0)
+  .filter(role=>{const key=role.id.toLowerCase();if(seen.has(key))return false;seen.add(key);return true;}).slice(0,100);
+}
+
 if(obj.leaderboards&&typeof obj.leaderboards==='object'){
   const updated={money:[],playtime:[],hearts:[]};
   for(const kind of Object.keys(updated)){
@@ -111,7 +121,7 @@ const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(
 try{const v=await body(req);const player=clean(v.player,16),discord=clean(v.discord,80),notes=safeText(v.notes,1000);
 if(!validPlayer(player)||discord.length<2||discord.length>80){reply(res,400,{error:'Enter a valid Minecraft username and Discord username.'},origin);return;}
 const id=crypto.randomUUID().slice(0,8);
-if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!['Helper','Moderator','Builder','Developer'].includes(role)||notes.length<15){reply(res,400,{error:'Choose a role and write at least 15 characters.'},origin);return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);reply(res,201,{ok:true,id},origin);return;}
+if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){reply(res,400,{error:'Choose a role and write at least 15 characters.'},origin);return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);reply(res,201,{ok:true,id},origin);return;}
 const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){reply(res,400,{error:'Invalid request type'},origin);return;}
 db.orders.push({id,player,discord,product,status:'pending',createdAt:new Date().toISOString()});db.orders=db.orders.slice(-500);save();
 await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must verify eligibility before /approveorder.');
