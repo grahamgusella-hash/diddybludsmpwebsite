@@ -17,12 +17,14 @@ const chatId=env('DISCORD_CHAT_CHANNEL_ID'),announcementId=env('DISCORD_ANNOUNCE
 const appId=env('DISCORD_APPLICATIONS_CHANNEL_ID'),ordersId=env('DISCORD_ORDERS_CHANNEL_ID');
 const staffRole=env('DISCORD_STAFF_ROLE_ID');
 const allowedOrigin=env('SITE_ORIGIN','https://grahamgusella-hash.github.io');
+const siteOrigins=new Set(['https://grahamgusella-hash.github.io',allowedOrigin]);
+const corsOrigin=origin=>siteOrigins.has(origin)?origin:'null';
 const recent=new Map();
 const clean=(s,max=200)=>String(s??'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
 const safeText=(s,max=200)=>clean(s,max).replace(/@/g,'＠');
 const enqueue=(action)=>{db.queue.push({id:crypto.randomUUID(),...action});if(db.queue.length>300)db.queue=db.queue.slice(-300);save();};
 const send=async(channelId,content)=>{if(!channelId||!client.isReady())return;try{const ch=await client.channels.fetch(channelId);if(ch?.isTextBased())await ch.send({content:content.slice(0,1900),allowedMentions:{parse:[]}});}catch(e){console.warn('Discord send:',e.message);}};
-const reply=(res,status,payload,origin)=>{const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':origin===allowedOrigin?allowedOrigin:'null','Vary':'Origin','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};res.writeHead(status,headers);res.end(JSON.stringify(payload));};
+const reply=(res,status,payload,origin)=>{const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':corsOrigin(origin),'Vary':'Origin','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};res.writeHead(status,headers);res.end(JSON.stringify(payload));};
 // Public read-only endpoints may be embedded on GitHub Pages or a custom domain.
 // Keep submissions and authenticated server routes restricted as before.
 const publicReply=(res,status,payload)=>{
@@ -114,7 +116,7 @@ const queue=db.queue.slice(0,30);save();reply(res,200,{commands:queue},origin);
 reply(res,404,{error:'Not found'},origin);return;
 }
 if(req.method==='POST'&&url.pathname==='/api/public/level-purchase'){
-if(origin!==allowedOrigin){reply(res,403,{error:'Website origin not allowed'},origin);return;}
+if(!siteOrigins.has(origin)){reply(res,403,{error:'Website origin not allowed'},origin);return;}
 const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];
 if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
 try{
@@ -128,7 +130,7 @@ reply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to rece
 }catch(e){reply(res,400,{error:'Invalid submission'},origin);return;}
 }
 if(req.method==='POST'&&(url.pathname==='/api/public/applications'||url.pathname==='/api/public/orders')){
-if(origin!==allowedOrigin){reply(res,403,{error:'Website origin not allowed'},origin);return;}
+if(!siteOrigins.has(origin)){reply(res,403,{error:'Website origin not allowed'},origin);return;}
 const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
 try{const v=await body(req);const player=clean(v.player,16),discord=clean(v.discord,80),notes=safeText(v.notes,1000);
 if(!validPlayer(player)||discord.length<2||discord.length>80){reply(res,400,{error:'Enter a valid Minecraft username and Discord username.'},origin);return;}
