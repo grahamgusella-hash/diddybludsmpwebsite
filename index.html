@@ -21,8 +21,8 @@
 <div class="card"><h3>⏱ Most Playtime</h3><div id="leaders-playtime"></div></div>
 <div class="card"><h3>❤️ Most Hearts</h3><div id="leaders-hearts"></div></div>
 </div></div></section>
-<section id="applications" class="band"><div class="container"><div class="section-heading"><h2>Community & applications</h2><p class="muted">Apply to help the staff team or send a separate rank/reward request for staff review.</p></div><div class="grid">
-<div class="box"><h3>Staff application</h3><form id="application-form"><label class="field">Minecraft username<input name="player" required maxlength="16"></label><label class="field">Discord username<input name="discord" required maxlength="80"></label><label class="field">Role<select name="role"><option>Helper</option><option>Moderator</option><option>Builder</option><option>Developer</option></select></label><label class="field">Why should we choose you?<textarea name="notes" required minlength="15" maxlength="1000"></textarea></label><button type="submit" class="btn">Send application</button><p class="status" role="status"></p></form></div>
+<section id="applications" class="band"><div class="container"><div class="section-heading"><h2>Community & applications</h2><p class="muted">Apply for any role listed by the Minecraft server. Applications are sent to staff for review and do not grant roles automatically.</p></div><div class="grid">
+<div class="box"><h3>Apply for a server role</h3><form id="application-form"><label class="field">Minecraft username<input name="player" required maxlength="16"></label><label class="field">Discord username<input name="discord" required maxlength="80"></label><label class="field">Role you want to apply for<select name="role" id="application-roles" required disabled><option value="">Waiting for server roles…</option></select></label><p id="roles-status" class="note" role="status">Roles are loaded from the Minecraft server.</p><label class="field">Why should we choose you?<textarea name="notes" required minlength="15" maxlength="1000"></textarea></label><button type="submit" class="btn">Send application</button><p class="status" role="status"></p></form></div>
 <div class="box"><h3>Automatically unlock ranks</h3><p class="muted">Rank purchases are handled directly by the Level Shop. Earn levels from playtime or exchange in-game money, then verify your account with <code>/levels code</code>.</p><p class="note">Purchases are made with in-game levels, not real currency. Once the plugin verifies the purchase, your rank changes automatically.</p><a href="#level-shop" class="btn">Open Level Shop</a></div>
 </div></div></section>
 <section id="commands"><div class="container"><div class="section-heading"><h2>Useful commands</h2></div><div class="commands">
@@ -37,12 +37,29 @@ const bridge=CONFIG.bridgeURL.replace(/\/$/,'');
 const ip=document.getElementById('ip-text'),copy=document.getElementById('copy-ip');
 if(CONFIG.serverIP){ip.textContent=CONFIG.serverIP;copy.disabled=false;}
 copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(CONFIG.serverIP);document.getElementById('copy-status').textContent='Copied!';}catch(e){document.getElementById('copy-status').textContent='Please copy the address manually.';}});
+async function loadApplicationRoles(){
+ const select=document.getElementById('application-roles'),label=document.getElementById('roles-status');
+ try{
+ const response=await fetch(bridge+'/api/public/application-roles',{cache:'no-store'});
+ if(!response.ok)throw Error('Server not available');
+ const data=await response.json(),roles=Array.isArray(data.roles)?data.roles:[];
+ select.replaceChildren();
+ const initial=document.createElement('option');initial.value='';initial.textContent='Choose the role you want';select.append(initial);
+ for(const role of roles){
+ const option=document.createElement('option');option.value=role.id;option.textContent=role.name;select.append(option);
+ }
+ select.disabled=roles.length===0;
+ label.textContent=roles.length?roles.length+' roles available to apply for. All applications are reviewed by staff.':'No roles have been synced. Check that the latest Minecraft plugin is installed.';
+ }catch(error){select.disabled=true;label.textContent='Could not load roles. Check the server connection and try again later.';}
+}
 async function loadStats(){
 try{const r=await fetch(bridge+'/api/public/stats');if(!r.ok)throw Error('Unavailable');const data=await r.json();
-document.getElementById('stats-state').textContent='Players online: '+Number(data.online||0)+(data.updatedAt?' • Updated '+new Date(data.updatedAt).toLocaleString():' • Awaiting Minecraft');
+const age=data.updatedAt?Date.now()-new Date(data.updatedAt).getTime():Infinity;
+const current=age>=0&&age<120000;
+document.getElementById('stats-state').textContent=current?'Players online: '+Number(data.online||0)+' • Updated '+new Date(data.updatedAt).toLocaleTimeString():'Minecraft is offline or has not synced recently. Last update: '+(data.updatedAt?new Date(data.updatedAt).toLocaleString():'never');
 const list=document.getElementById('player-stats');list.replaceChildren();
-const players=Array.isArray(data.players)?data.players:[];
-if(!players.length){list.textContent='No player data yet.';return;}
+const players=current&&Array.isArray(data.players)?data.players:[];
+if(!players.length){list.textContent=current?'No players online right now.':'Live player stats will reappear when Minecraft reconnects.';return;}
 for(const p of players.slice(0,80)){const row=document.createElement('div');row.className='statsline';const name=document.createElement('span');name.textContent=p.name||'Player';const score=document.createElement('span');score.textContent='♥ '+Number(p.hearts||0)+' · '+Number(p.levels||0)+' levels · $'+Number(p.money||0).toLocaleString();row.append(name,score);list.append(row);}
 }catch(e){document.getElementById('stats-state').textContent='Player stats unavailable at the moment.';}}
 
@@ -67,7 +84,7 @@ value.textContent=type==='money'?String.fromCharCode(36)+n.toLocaleString():type
 row.append(name,value);element.append(row);
 });
 }
-status.textContent=data.updatedAt?'Updated '+new Date(data.updatedAt).toLocaleString():'Waiting for the Minecraft plugin to sync.';
+status.textContent=data.updatedAt?'Last updated '+new Date(data.updatedAt).toLocaleString()+(Date.now()-new Date(data.updatedAt).getTime()>120000?' • Server may be offline':''):'Waiting for the Minecraft plugin to sync.';
 }catch(e){status.textContent='Leaderboards temporarily unavailable.';}
 }
 async function loadLevelShop(){
@@ -85,5 +102,6 @@ try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bri
 });
 for(const [formId,endpoint] of [['application-form','applications']]){
 const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}});}
-loadStats();loadLevelShop();loadLeaderboards();
+loadStats();loadLevelShop();loadLeaderboards();loadApplicationRoles();
+setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();loadLevelShop();}},30000);
 </script></body></html>
