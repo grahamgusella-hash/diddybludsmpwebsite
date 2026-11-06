@@ -36,6 +36,20 @@ const publicReply=(res,status,payload)=>{
   });
   res.end(JSON.stringify(payload));
 };
+// These endpoints do not use cookies. Cross-origin POST requests are allowed
+// so custom-domain and GitHub Pages visitors can submit forms. The in-game
+// one-time code authorizes level purchases; applications are rate-limited.
+const publicWriteReply=(res,status,payload)=>{
+  res.writeHead(status,{
+    'Content-Type':'application/json; charset=utf-8',
+    'Cache-Control':'no-store',
+    'X-Content-Type-Options':'nosniff',
+    'Access-Control-Allow-Origin':'*',
+    'Access-Control-Allow-Methods':'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers':'Content-Type'
+  });
+  res.end(JSON.stringify(payload));
+};
 const verify=(input)=>{if(typeof input!=='string')return false;const a=Buffer.from(input),b=Buffer.from('Bearer '+secret);return a.length===b.length&&crypto.timingSafeEqual(a,b);};
 const throttle=(ip)=>{const now=Date.now();const hist=(recent.get(ip)||[]).filter(t=>now-t<3600000);if(hist.length>=6)return true;hist.push(now);recent.set(ip,hist);if(recent.size>10000)recent.clear();return false;};
 const body=async(req)=>{let s='';for await(const part of req){s+=part;if(s.length>18000)throw Error('Request too large');}return JSON.parse(s||'{}');};
@@ -69,8 +83,11 @@ await i.reply({content:'Rank grant queued. **Confirm delivery in-game.** Ensure 
 client.login(token).catch(e=>console.error('Discord login failed:',e.message));
 const server=http.createServer(async(req,res)=>{
 const origin=req.headers.origin;
-if(req.method==='OPTIONS'){reply(res,204,{},origin);return;}
 const url=new URL(req.url,'http://localhost');
+if(req.method==='OPTIONS'){
+  if(url.pathname.startsWith('/api/public/')){publicWriteReply(res,204,{});return;}
+  reply(res,204,{},origin);return;
+}
 if(req.method==='GET'&&url.pathname==='/health'){publicReply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt});return;}
 if(req.method==='GET'&&url.pathname==='/api/public/stats'){publicReply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt});return;}
 if(req.method==='GET'&&url.pathname==='/api/public/leaderboards'){publicReply(res,200,{leaderboards:db.leaderboards,updatedAt:db.updatedAt});return;}
@@ -116,31 +133,29 @@ const queue=db.queue.slice(0,30);save();reply(res,200,{commands:queue},origin);
 reply(res,404,{error:'Not found'},origin);return;
 }
 if(req.method==='POST'&&url.pathname==='/api/public/level-purchase'){
-if(!siteOrigins.has(origin)){reply(res,403,{error:'Website origin not allowed'},origin);return;}
 const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];
-if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
+if(throttle(ip)){publicWriteReply(res,429,{error:'Too many requests. Try again later.'});return;}
 try{
 const v=await body(req),player=clean(v.player,16),code=clean(v.code,20).toUpperCase(),offer=clean(v.offer,32);
-if(!validPlayer(player)||! /^[A-Z2-9]{10}$/.test(code)||! /^[a-z0-9_-]{1,32}$/.test(offer)){reply(res,400,{error:'Enter a valid player, 10-character code, and reward.'},origin);return;}
-if(!db.updatedAt||Date.now()-new Date(db.updatedAt).getTime()>120000){reply(res,503,{error:'Minecraft is not connected. Try again when the server is online.'},origin);return;}
-if(!db.levelShop?.offers.some(item=>item.id===offer)){reply(res,400,{error:'Unknown or unavailable offer'},origin);return;}
-if(!db.players.some(p=>p.name.toLowerCase()===player.toLowerCase())){reply(res,409,{error:'Join Minecraft before requesting a level reward.'},origin);return;}
+if(!validPlayer(player)||! /^[A-Z2-9]{10}$/.test(code)||! /^[a-z0-9_-]{1,32}$/.test(offer)){publicWriteReply(res,400,{error:'Enter a valid player, 10-character code, and reward.'});return;}
+if(!db.updatedAt||Date.now()-new Date(db.updatedAt).getTime()>120000){publicWriteReply(res,503,{error:'Minecraft is not connected. Try again when the server is online.'});return;}
+if(!db.levelShop?.offers.some(item=>item.id===offer)){publicWriteReply(res,400,{error:'Unknown or unavailable offer'});return;}
+if(!db.players.some(p=>p.name.toLowerCase()===player.toLowerCase())){publicWriteReply(res,409,{error:'Join Minecraft before requesting a level reward.'});return;}
 enqueue({type:'level_purchase',player,code,offer});
-reply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to receive confirmation. Levels are deducted only after code and balance verification.'},origin);return;
-}catch(e){reply(res,400,{error:'Invalid submission'},origin);return;}
+publicWriteReply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to receive confirmation. Levels are deducted only after code and balance verification.'});return;
+}catch(e){publicWriteReply(res,400,{error:'Invalid submission'});return;}
 }
 if(req.method==='POST'&&(url.pathname==='/api/public/applications'||url.pathname==='/api/public/orders')){
-if(!siteOrigins.has(origin)){reply(res,403,{error:'Website origin not allowed'},origin);return;}
-const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
+const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];if(throttle(ip)){publicWriteReply(res,429,{error:'Too many requests. Try again later.'});return;}
 try{const v=await body(req);const player=clean(v.player,16),discord=clean(v.discord,80),notes=safeText(v.notes,1000);
-if(!validPlayer(player)||discord.length<2||discord.length>80){reply(res,400,{error:'Enter a valid Minecraft username and Discord username.'},origin);return;}
+if(!validPlayer(player)||discord.length<2||discord.length>80){publicWriteReply(res,400,{error:'Enter a valid Minecraft username and Discord username.'});return;}
 const id=crypto.randomUUID().slice(0,8);
-if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){reply(res,400,{error:'Choose a role and write at least 15 characters.'},origin);return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);reply(res,201,{ok:true,id},origin);return;}
-const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){reply(res,400,{error:'Invalid request type'},origin);return;}
+if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){publicWriteReply(res,400,{error:'Choose a role and write at least 15 characters.'});return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);publicWriteReply(res,201,{ok:true,id});return;}
+const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){publicWriteReply(res,400,{error:'Invalid request type'});return;}
 db.orders.push({id,player,discord,product,status:'pending',createdAt:new Date().toISOString()});db.orders=db.orders.slice(-500);save();
 await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must verify eligibility before /approveorder.');
-reply(res,201,{ok:true,id,message:'Request submitted. This is not a purchase or payment confirmation.'});return;
-}catch(e){reply(res,400,{error:'Invalid submission: '+e.message},origin);return;}
+publicWriteReply(res,201,{ok:true,id,message:'Request submitted. This is not a purchase or payment confirmation.'});return;
+}catch(e){publicWriteReply(res,400,{error:'Invalid submission: '+e.message});return;}
 }
 reply(res,404,{error:'Not found'},origin);
 });
