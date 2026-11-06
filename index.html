@@ -43,11 +43,13 @@ async function loadApplicationRoles(){
  const response=await fetch(bridge+'/api/public/application-roles',{cache:'no-store'});
  if(!response.ok)throw Error('Server not available');
  const data=await response.json(),roles=Array.isArray(data.roles)?data.roles:[];
+ const selected=select.value;
  select.replaceChildren();
  const initial=document.createElement('option');initial.value='';initial.textContent='Choose the role you want';select.append(initial);
  for(const role of roles){
  const option=document.createElement('option');option.value=role.id;option.textContent=role.name;select.append(option);
  }
+ if(roles.some(role=>role.id===selected))select.value=selected;
  select.disabled=roles.length===0;
  label.textContent=roles.length?roles.length+' roles available to apply for. All applications are reviewed by staff.':'No roles have been synced. Check that the latest Minecraft plugin is installed.';
  }catch(error){select.disabled=true;label.textContent='Could not load roles. Check the server connection and try again later.';}
