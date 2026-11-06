@@ -69,7 +69,7 @@ if(url.pathname.startsWith('/api/server/')){
 if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
 if(req.method==='POST'&&url.pathname==='/api/server/sync'){
 try{const obj=await body(req);if(!Array.isArray(obj.players)||obj.players.length>250){reply(res,400,{error:'Invalid players'},origin);return;}
-db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,levels:Math.max(0,Number(p.levels)||0),rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
+db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,playtime:Math.max(0,Number(p.playtime)||0),levels:Math.max(0,Number(p.levels)||0),rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
 db.online=db.players.length;db.updatedAt=new Date().toISOString();
 if(Array.isArray(obj.applicationRoles)){
  const seen=new Set();
