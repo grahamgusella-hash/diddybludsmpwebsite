@@ -9,7 +9,7 @@ const secret=env('BRIDGE_SECRET');
 const token=env('DISCORD_TOKEN');
 if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
 const dataFile=env('DATA_FILE','./bridge-data.json');
-let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[]};
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null};
 try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
 const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
@@ -60,16 +60,34 @@ if(req.method==='OPTIONS'){reply(res,204,{},origin);return;}
 const url=new URL(req.url,'http://localhost');
 if(req.method==='GET'&&url.pathname==='/health'){reply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt},origin);return;}
 if(req.method==='GET'&&url.pathname==='/api/public/stats'){reply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt},origin);return;}
+if(req.method==='GET'&&url.pathname==='/api/public/level-shop'){reply(res,200,{shop:db.levelShop,updatedAt:db.updatedAt},origin);return;}
 if(url.pathname.startsWith('/api/server/')){
 if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
 if(req.method==='POST'&&url.pathname==='/api/server/sync'){
 try{const obj=await body(req);if(!Array.isArray(obj.players)||obj.players.length>250){reply(res,400,{error:'Invalid players'},origin);return;}
-db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
+db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,levels:Math.max(0,Number(p.levels)||0),rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
 db.online=db.players.length;db.updatedAt=new Date().toISOString();
+if(obj.levelShop && Array.isArray(obj.levelShop.offers)){
+  const offers=obj.levelShop.offers.slice(0,40).map(o=>({id:clean(o.id,32),name:safeText(o.name,70),type:clean(o.type,20),cost:Number(o.cost)})).filter(o=>/^[a-z0-9_-]{1,32}$/.test(o.id)&&['rank','money','shards'].includes(o.type)&&Number.isInteger(o.cost)&&o.cost>0);
+  db.levelShop={offers,playtimeMinutes:Math.max(1,Number(obj.levelShop.playtimeMinutes)||30),moneyPerLevel:Math.max(1,Number(obj.levelShop.moneyPerLevel)||10000000)};
+}
 for(const line of (Array.isArray(obj.chat)?obj.chat.slice(0,20):[])){const msg=safeText(line,240);if(msg)await send(chatId,'🎮 '+msg);}
 const queue=db.queue.splice(0,30);save();reply(res,200,{commands:queue},origin);
 }catch(e){reply(res,400,{error:'Invalid sync: '+e.message},origin);}return;}
 reply(res,404,{error:'Not found'},origin);return;
+}
+if(req.method==='POST'&&url.pathname==='/api/public/level-purchase'){
+if(origin!==allowedOrigin){reply(res,403,{error:'Website origin not allowed'},origin);return;}
+const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];
+if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
+try{
+const v=await body(req),player=clean(v.player,16),code=clean(v.code,20).toUpperCase(),offer=clean(v.offer,32);
+if(!validPlayer(player)||! /^[A-Z2-9]{10}$/.test(code)||! /^[a-z0-9_-]{1,32}$/.test(offer)){reply(res,400,{error:'Enter a valid player, 10-character code, and reward.'},origin);return;}
+if(!db.levelShop?.offers.some(item=>item.id===offer)){reply(res,400,{error:'Unknown or unavailable offer'},origin);return;}
+if(!db.players.some(p=>p.name.toLowerCase()===player.toLowerCase())){reply(res,409,{error:'Join Minecraft before requesting a level reward.'},origin);return;}
+enqueue({type:'level_purchase',player,code,offer});
+reply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to receive confirmation. Levels are deducted only after code and balance verification.'});return;
+}catch(e){reply(res,400,{error:'Invalid submission'},origin);return;}
 }
 if(req.method==='POST'&&(url.pathname==='/api/public/applications'||url.pathname==='/api/public/orders')){
 if(origin!==allowedOrigin){reply(res,403,{error:'Website origin not allowed'},origin);return;}
