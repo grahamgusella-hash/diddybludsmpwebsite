@@ -138,5 +138,6 @@ try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bri
 for(const [formId,endpoint] of [['application-form','applications']]){
 const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}});}
 loadStats();loadLevelShop();loadLeaderboards();loadApplicationRoles();
-setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();loadLevelShop();}},30000);
+setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();}},30000);
+setInterval(()=>{if(!document.hidden)loadLevelShop();},10000);
 </script></body></html>
