@@ -14,7 +14,7 @@
 <div class="card"><h3>♥ Lifesteal</h3><p>Earn, trade, and protect your hearts through PvP.</p></div><div class="card"><h3>💰 Economy</h3><p>Make in-game money and exchange it for levels.</p></div><div class="card"><h3>🏆 Ranks & Kits</h3><p>Earn levels and redeem them for configured ranks and other rewards.</p></div>
 <div class="card"><h3>🔥 Spawners</h3><p>Stack special spawners to grow resource farms.</p></div><div class="card"><h3>⚒ Custom Items</h3><p>Powerful tools, rockets, and useful custom items.</p></div><div class="card"><h3>🏡 Travel & Storage</h3><p>Homes, random teleportation, auctions, and vaults.</p></div></div></div></section>
 <section id="level-shop" class="band"><div class="container"><div class="section-heading"><h2>Spend your <span>levels</span></h2><p class="muted">Earn levels by playing or convert in-game money using <code>/levels buy</code>. Spend levels on your server's rewards — no real-money payment required.</p><p class="status" id="level-rates">Waiting for level-shop configuration from Minecraft…</p></div><div id="level-offers" class="grid"></div>
-<div class="box" style="max-width:680px;margin-top:25px"><h3>Redeem a rank or reward</h3><p class="muted">Ranks and rewards are automatically granted by your Minecraft plugin after it verifies your levels and one-time code. No staff approval is needed. Run <code>/levels code</code> in Minecraft, enter the code here within 5 minutes, and stay online to receive your reward.</p><form id="level-form"><label class="field">Minecraft username<input name="player" required maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Your Minecraft username"></label><label class="field">One-time code<input name="code" required minlength="10" maxlength="10" autocomplete="off" placeholder="10-character in-game code"></label><label class="field">Rank or reward<select id="level-offer" name="offer" required><option value="">Waiting for server…</option></select></label><button id="level-submit" class="btn" type="submit" disabled>Spend levels</button><p id="level-feedback" class="status" role="status" aria-live="polite"></p></form></div></div></section>
+<div class="box" style="max-width:680px;margin-top:25px"><h3>Redeem a rank or reward</h3><p class="muted">Ranks and rewards are automatically granted by your Minecraft plugin after it verifies your levels and one-time code. No staff approval is needed. Run <code>/levels code</code> in Minecraft, enter the code here within 5 minutes, and stay online to receive your reward.</p><form id="level-form"><label class="field">Minecraft username<input name="player" required maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Your Minecraft username"></label><label class="field">One-time code<input name="code" required minlength="10" maxlength="10" autocomplete="off" placeholder="10-character in-game code"></label><label class="field">Rank or reward<select id="level-offer" name="offer" required><option value="">Waiting for server…</option></select></label><button id="level-submit" class="btn" type="submit" disabled>Buy on Website</button><p id="level-feedback" class="status" role="status" aria-live="polite"></p></form></div></div></section>
 <section id="stats"><div class="container"><div class="section-heading"><h2>Online player stats</h2><p id="stats-state" class="muted">Waiting for your Minecraft server…</p></div><div id="player-stats" class="box"></div></div></section>
 <section id="leaderboards" class="band"><div class="container"><div class="section-heading"><h2>🏆 Server <span>leaderboards</span></h2><p class="muted">Top 10 players across the server, including players who are offline. Leaderboard wipes in Minecraft are reflected here.</p><p id="leaderboards-state" class="status">Loading leaderboard rankings…</p></div><div class="grid">
 <div class="card"><h3>💰 Richest Players</h3><div id="leaders-money"></div></div>
@@ -90,14 +90,47 @@ status.textContent=data.updatedAt?'Last updated '+new Date(data.updatedAt).toLoc
 }catch(e){status.textContent='Leaderboards temporarily unavailable.';}
 }
 async function loadLevelShop(){
-try{const response=await fetch(bridge+'/api/public/level-shop');if(!response.ok)throw Error('Unavailable');const data=await response.json();const shop=data.shop;
-if(!shop||!Array.isArray(shop.offers))return;
-document.getElementById('level-rates').textContent='1 level per '+shop.playtimeMinutes+' minutes played, or $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game per level.';
-const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');board.replaceChildren();select.replaceChildren();
-const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a reward';select.append(placeholder);
-for(const offer of shop.offers){const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.className='offer-title';h.textContent=offer.name;const price=document.createElement('p');price.className='price';price.textContent=offer.cost+' levels';const type=document.createElement('p');type.textContent=offer.type==='rank'?'Rank':'In-game reward';card.append(h,price,type);board.append(card);const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';select.append(option);}
-document.getElementById('level-submit').disabled=!shop.offers.length;
-}catch(e){document.getElementById('level-rates').textContent='Level shop is currently unavailable.';}}
+ const rates=document.getElementById('level-rates');
+ try{
+  const response=await fetch(bridge+'/api/public/level-shop',{cache:'no-store'});
+  if(!response.ok)throw Error('Unavailable');
+  const data=await response.json(), shop=data.shop;
+  const fresh=data.updatedAt&&Date.now()-new Date(data.updatedAt).getTime()<120000;
+  if(!shop||!Array.isArray(shop.offers)||!fresh){
+    rates.textContent='The live shop is waiting for Minecraft to connect. Buying is temporarily unavailable.';
+    document.getElementById('level-submit').disabled=true;
+    return;
+  }
+  rates.textContent='Earn 1 level per '+Number(shop.playtimeMinutes)+' minutes played, or exchange $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game for 1 level. All rank and reward purchases happen here on the website.';
+  const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');
+  const selected=select.value;
+  board.replaceChildren();
+  select.replaceChildren();
+  const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a rank or reward';select.append(placeholder);
+  const offers=shop.offers.filter(o=>o&&typeof o.id==='string'&&Number.isInteger(Number(o.cost))&&Number(o.cost)>0);
+  offers.sort((a,b)=>(a.type==='rank'?0:1)-(b.type==='rank'?0:1)||a.cost-b.cost);
+  for(const offer of offers){
+   const card=document.createElement('article');card.className='card';
+   const h=document.createElement('h3');h.className='offer-title';h.textContent=offer.name;
+   const price=document.createElement('p');price.className='price';price.textContent=Number(offer.cost).toLocaleString()+' levels';
+   const type=document.createElement('p');type.textContent=offer.type==='rank'?'Minecraft rank':'In-game reward';
+   const buy=document.createElement('button');buy.className='btn';buy.type='button';buy.textContent=offer.type==='rank'?'Buy Rank':'Buy Reward';
+   buy.addEventListener('click',()=>{
+    select.value=offer.id;
+    document.getElementById('level-form').scrollIntoView({behavior:'smooth',block:'center'});
+    document.getElementById('level-feedback').textContent='Selected '+offer.name+'. Enter your Minecraft name and /levels code to purchase.';
+   });
+   card.append(h,price,type,buy);board.append(card);
+   const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';select.append(option);
+  }
+  if(offers.some(o=>o.id===selected))select.value=selected;
+  if(!offers.length){const p=document.createElement('p');p.className='muted';p.textContent='No ranks or rewards are currently listed. The server admin can use /buyable rank create <rank> <levels>.';board.append(p);}
+  document.getElementById('level-submit').disabled=!offers.length;
+ }catch(error){
+  rates.textContent='Level shop is currently unavailable. Please try again later.';
+  document.getElementById('level-submit').disabled=true;
+ }
+}
 document.getElementById('level-form').addEventListener('submit',async e=>{
 e.preventDefault();const form=e.currentTarget,btn=document.getElementById('level-submit'),out=document.getElementById('level-feedback');btn.disabled=true;out.textContent='Sending purchase…';
 try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/level-purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Purchase sent! Your Minecraft plugin will automatically grant the rank or reward after checking your code and level balance. Check Minecraft chat for confirmation.';form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}
