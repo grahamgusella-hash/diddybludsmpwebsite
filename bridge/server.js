@@ -86,7 +86,7 @@ if(!validPlayer(player)||! /^[A-Z2-9]{10}$/.test(code)||! /^[a-z0-9_-]{1,32}$/.t
 if(!db.levelShop?.offers.some(item=>item.id===offer)){reply(res,400,{error:'Unknown or unavailable offer'},origin);return;}
 if(!db.players.some(p=>p.name.toLowerCase()===player.toLowerCase())){reply(res,409,{error:'Join Minecraft before requesting a level reward.'},origin);return;}
 enqueue({type:'level_purchase',player,code,offer});
-reply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to receive confirmation. Levels are deducted only after code and balance verification.'});return;
+reply(res,202,{ok:true,message:'Request queued. Stay online in Minecraft to receive confirmation. Levels are deducted only after code and balance verification.'},origin);return;
 }catch(e){reply(res,400,{error:'Invalid submission'},origin);return;}
 }
 if(req.method==='POST'&&(url.pathname==='/api/public/applications'||url.pathname==='/api/public/orders')){
