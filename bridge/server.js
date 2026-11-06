@@ -23,6 +23,17 @@ const safeText=(s,max=200)=>clean(s,max).replace(/@/g,'＠');
 const enqueue=(action)=>{db.queue.push({id:crypto.randomUUID(),...action});if(db.queue.length>300)db.queue=db.queue.slice(-300);save();};
 const send=async(channelId,content)=>{if(!channelId||!client.isReady())return;try{const ch=await client.channels.fetch(channelId);if(ch?.isTextBased())await ch.send({content:content.slice(0,1900),allowedMentions:{parse:[]}});}catch(e){console.warn('Discord send:',e.message);}};
 const reply=(res,status,payload,origin)=>{const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':origin===allowedOrigin?allowedOrigin:'null','Vary':'Origin','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};res.writeHead(status,headers);res.end(JSON.stringify(payload));};
+// Public read-only endpoints may be embedded on GitHub Pages or a custom domain.
+// Keep submissions and authenticated server routes restricted as before.
+const publicReply=(res,status,payload)=>{
+  res.writeHead(status,{
+    'Content-Type':'application/json; charset=utf-8',
+    'Cache-Control':'no-store',
+    'X-Content-Type-Options':'nosniff',
+    'Access-Control-Allow-Origin':'*'
+  });
+  res.end(JSON.stringify(payload));
+};
 const verify=(input)=>{if(typeof input!=='string')return false;const a=Buffer.from(input),b=Buffer.from('Bearer '+secret);return a.length===b.length&&crypto.timingSafeEqual(a,b);};
 const throttle=(ip)=>{const now=Date.now();const hist=(recent.get(ip)||[]).filter(t=>now-t<3600000);if(hist.length>=6)return true;hist.push(now);recent.set(ip,hist);if(recent.size>10000)recent.clear();return false;};
 const body=async(req)=>{let s='';for await(const part of req){s+=part;if(s.length>18000)throw Error('Request too large');}return JSON.parse(s||'{}');};
@@ -58,12 +69,12 @@ const server=http.createServer(async(req,res)=>{
 const origin=req.headers.origin;
 if(req.method==='OPTIONS'){reply(res,204,{},origin);return;}
 const url=new URL(req.url,'http://localhost');
-if(req.method==='GET'&&url.pathname==='/health'){reply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt},origin);return;}
-if(req.method==='GET'&&url.pathname==='/api/public/stats'){reply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt},origin);return;}
-if(req.method==='GET'&&url.pathname==='/api/public/leaderboards'){reply(res,200,{leaderboards:db.leaderboards,updatedAt:db.updatedAt},origin);return;}
-if(req.method==='GET'&&url.pathname==='/api/public/level-shop'){reply(res,200,{shop:db.levelShop,updatedAt:db.updatedAt},origin);return;}
+if(req.method==='GET'&&url.pathname==='/health'){publicReply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt});return;}
+if(req.method==='GET'&&url.pathname==='/api/public/stats'){publicReply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt});return;}
+if(req.method==='GET'&&url.pathname==='/api/public/leaderboards'){publicReply(res,200,{leaderboards:db.leaderboards,updatedAt:db.updatedAt});return;}
+if(req.method==='GET'&&url.pathname==='/api/public/level-shop'){publicReply(res,200,{shop:db.levelShop,updatedAt:db.updatedAt});return;}
 if(req.method==='GET'&&url.pathname==='/api/public/application-roles'){
-reply(res,200,{roles:db.applicationRoles,updatedAt:db.updatedAt},origin);return;
+publicReply(res,200,{roles:db.applicationRoles,updatedAt:db.updatedAt});return;
 }
 if(url.pathname.startsWith('/api/server/')){
 if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
