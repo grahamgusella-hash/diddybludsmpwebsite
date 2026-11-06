@@ -72,7 +72,9 @@ if(obj.levelShop && Array.isArray(obj.levelShop.offers)){
   db.levelShop={offers,playtimeMinutes:Math.max(1,Number(obj.levelShop.playtimeMinutes)||30),moneyPerLevel:Math.max(1,Number(obj.levelShop.moneyPerLevel)||10000000)};
 }
 for(const line of (Array.isArray(obj.chat)?obj.chat.slice(0,20):[])){const msg=safeText(line,240);if(msg)await send(chatId,'🎮 '+msg);}
-const queue=db.queue.splice(0,30);save();reply(res,200,{commands:queue},origin);
+const ackIds=new Set((Array.isArray(obj.acks)?obj.acks:[]).slice(0,60).filter(id=>typeof id==='string'&&/^[0-9a-f-]{36}$/.test(id)));
+if(ackIds.size)db.queue=db.queue.filter(command=>!ackIds.has(command.id));
+const queue=db.queue.slice(0,30);save();reply(res,200,{commands:queue},origin);
 }catch(e){reply(res,400,{error:'Invalid sync: '+e.message},origin);}return;}
 reply(res,404,{error:'Not found'},origin);return;
 }
