@@ -109,6 +109,7 @@ if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},ori
 try{
 const v=await body(req),player=clean(v.player,16),code=clean(v.code,20).toUpperCase(),offer=clean(v.offer,32);
 if(!validPlayer(player)||! /^[A-Z2-9]{10}$/.test(code)||! /^[a-z0-9_-]{1,32}$/.test(offer)){reply(res,400,{error:'Enter a valid player, 10-character code, and reward.'},origin);return;}
+if(!db.updatedAt||Date.now()-new Date(db.updatedAt).getTime()>120000){reply(res,503,{error:'Minecraft is not connected. Try again when the server is online.'},origin);return;}
 if(!db.levelShop?.offers.some(item=>item.id===offer)){reply(res,400,{error:'Unknown or unavailable offer'},origin);return;}
 if(!db.players.some(p=>p.name.toLowerCase()===player.toLowerCase())){reply(res,409,{error:'Join Minecraft before requesting a level reward.'},origin);return;}
 enqueue({type:'level_purchase',player,code,offer});
