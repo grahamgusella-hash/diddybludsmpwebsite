@@ -1,149 +1,59 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#0b0d13">
-<meta name="description" content="Diddyblud Lifesteal — a Minecraft Lifesteal SMP with custom hearts, economy, spawners, kits, and more.">
-<title>Diddyblud Lifesteal | Minecraft SMP</title>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b0d13"><title>Diddyblud Lifesteal | Server Hub</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Press+Start+2P&display=swap');
-:root{color-scheme:dark;--bg:#0b0d13;--panel:#151923;--muted:#a9b0c0;--line:#303544;--red:#fa4a5e;--gold:#ffd77b;--text:#f4f5f8}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;line-height:1.6}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 75% 0%,#671d2a40,transparent 46%),radial-gradient(ellipse at 0% 70%,#29366036,transparent 54%);z-index:-1}
-a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
-.container{width:min(1120px,calc(100% - 40px));margin:auto}.pixel{font-family:'Press Start 2P',monospace;font-weight:400;line-height:1.7}
-nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(18px);background:#0b0d13db;border-bottom:1px solid #ffffff13}
-.navinner{min-height:76px;display:flex;align-items:center;gap:24px;justify-content:space-between}
-.brand{display:flex;gap:13px;align-items:center;font-size:13px}.logo{width:39px;height:39px;display:grid;place-items:center;background:#ff4c6022;border:1px solid #fa4a5e77;border-radius:10px;font-size:23px}
-.links{display:flex;gap:25px;align-items:center}.links a{font-size:14px;color:#c6cbd5}.links a:hover{color:white}.btn{background:var(--red);border:1px solid #ff7180;color:#18070a;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;border-radius:10px;transition:transform .2s,filter .2s}.btn:hover{transform:translateY(-2px);filter:brightness(1.12)}.btn.secondary{color:white;background:#ffffff12;border-color:#ffffff38}.btn.small{padding:10px 16px;font-size:14px}
-.hero{padding:110px 0 100px;overflow:hidden}.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:44px}.eyebrow{display:inline-block;background:#ff4a5e14;color:#ff9eaa;border:1px solid #fa4a5e66;border-radius:100px;padding:7px 14px;font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
-h1{font-size:clamp(42px,6vw,78px);line-height:1.09;letter-spacing:-.065em;margin:22px 0 20px}h1 span{color:var(--red)}.lead{font-size:19px;color:var(--muted);max-width:580px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
-.hero-art{position:relative;min-height:380px;display:grid;place-items:center}.orb{width:min(350px,100%);aspect-ratio:1;border-radius:35%;background:radial-gradient(circle at 50% 45%,#ff788e50,#b0173024 50%,transparent 72%);filter:blur(15px);position:absolute}.heart{font-family:monospace;font-weight:900;font-size:clamp(155px,24vw,300px);line-height:1;color:#f44761;text-shadow:10px 10px 0 #831b35,20px 20px 0 #360c1c,0 0 90px #f4476175;transform:rotate(-7deg);z-index:1;animation:float 4s ease-in-out infinite}@keyframes float{50%{transform:translateY(-15px) rotate(-3deg)}}.orbit{position:absolute;width:330px;height:330px;border:1px dashed #ff879440;border-radius:50%}.spark{position:absolute;font-size:25px;color:var(--gold)}.s1{top:12%;left:17%}.s2{right:8%;bottom:19%}.s3{left:15%;bottom:9%}
-section{padding:70px 0}.section-top{margin-bottom:32px}.kicker{color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:12px}h2{font-size:clamp(30px,4vw,46px);letter-spacing:-.045em;line-height:1.15;margin:10px 0 12px}p.muted{color:var(--muted);max-width:700px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{background:linear-gradient(160deg,#1a1e2a,#11151d);border:1px solid var(--line);border-radius:16px;padding:26px;transition:border-color .2s,transform .2s}.card:hover{border-color:#fa4a5e88;transform:translateY(-3px)}.emoji{font-size:31px}.card h3{font-size:21px;margin:16px 0 8px}.card p{color:var(--muted);margin:0;font-size:15px}
-.band{background:#121620;border-block:1px solid var(--line)}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}.showcase{border:1px solid #913345;border-radius:18px;padding:32px;background:linear-gradient(145deg,#391826,#151924);box-shadow:0 30px 80px #0005}.showcase .pixel{font-size:14px;color:#ff8695}.showcase ul{padding-left:20px;color:#d8dce5}.showcase li{padding:5px 0}.tag{display:inline-block;border-radius:6px;border:1px solid #ffffff29;background:#ffffff0b;padding:5px 9px;font-size:12px;color:#d9e0eb;margin:4px}
-.command-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.command{background:#181c26;border:1px solid var(--line);border-radius:11px;padding:15px 18px;display:flex;gap:15px;justify-content:space-between;align-items:center}.command code{font-size:15px;font-weight:700;color:#ff8b9b;white-space:nowrap}.command span{color:#b7becc;font-size:13px;text-align:right}
-.join{background:linear-gradient(135deg,#461522,#1e1b2c 65%,#12253a);border:1px solid #a7435780;border-radius:22px;padding:50px;text-align:center}.join h2{margin-top:12px}.server-ip{margin:24px auto;max-width:540px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;background:#090b12a8;padding:15px;border:1px solid #ffffff35;border-radius:12px}.server-ip strong{flex:1;min-width:200px;overflow-wrap:anywhere}.server-ip small{display:block;color:#9ba4b5;font-weight:400}
-footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:14px}.footerrow{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
-.menu-button{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:white}
-.note{color:#adb4c2;font-size:13px;margin-top:15px}.status{min-height:1.5em;color:#ffd77b;font-size:14px;margin:8px 0}
-@media(max-width:800px){.hero-grid,.two-col{grid-template-columns:1fr}.hero{padding:65px 0}.hero-art{min-height:245px;grid-row:1}.heart{font-size:180px}.orbit{width:230px;height:230px}.grid{grid-template-columns:repeat(2,1fr)}.menu-button{display:block}.links{display:none;position:absolute;top:76px;left:0;right:0;background:#11151f;border-bottom:1px solid var(--line);padding:20px;flex-direction:column;align-items:stretch}.links.open{display:flex}.links a{padding:5px}.navinner>.btn{display:none}}
-@media(max-width:560px){.grid,.command-grid{grid-template-columns:1fr}.container{width:min(100% - 28px,1120px)}.hero-art{min-height:210px}.hero{padding-top:38px}.heart{font-size:150px}.join{padding:30px 18px}section{padding:50px 0}.server-ip strong{min-width:0}.command{align-items:flex-start;flex-direction:column;gap:3px}.command span{text-align:left}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
-#community form{display:grid;gap:12px;margin-top:12px}#community label{display:grid;gap:4px;color:#c9cfdb;font-size:13px}#community input,#community select,#community textarea{width:100%;background:#0b0e15;border:1px solid #414758;color:white;border-radius:7px;padding:10px;font:inherit}#community textarea{min-height:90px;resize:vertical}#player-stats{font-size:13px;margin-top:14px;max-height:250px;overflow:auto}#player-stats .statrow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #303544;padding:8px 0}#level-purchase-form{display:grid;gap:13px}#level-purchase-form label{display:grid;gap:5px;font-size:14px}#level-purchase-form input,#level-purchase-form select{background:#0b0e15;color:white;padding:12px;border:1px solid #414758;border-radius:8px;font:inherit}#level-offers .card{min-height:160px}#level-offers .cost{color:#ff8c9b;font-weight:700}</style>
-</head>
+:root{color-scheme:dark;--bg:#0b0d13;--panel:#171b26;--line:#333a4c;--red:#f34b65;--text:#f2f4f8;--muted:#aeb6c7}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:var(--text);background:radial-gradient(ellipse at 80% 5%,#6023345c,transparent 40%),var(--bg);font:16px/1.6 system-ui,Arial,sans-serif}a{color:inherit;text-decoration:none}a:hover{color:#ff8ca0}.container{width:min(1120px,calc(100% - 32px));margin:auto}header{background:#0b0d13ed;position:sticky;top:0;z-index:10;border-bottom:1px solid var(--line)}.bar{display:flex;align-items:center;justify-content:space-between;min-height:72px;gap:20px}.brand{font-size:17px;font-weight:900;letter-spacing:1px}.brand span{color:var(--red)}.nav{display:flex;flex-wrap:wrap;gap:14px}.nav a{font-size:13px;color:#cbd2df}section{padding:65px 0}h1{font-size:clamp(42px,6vw,76px);line-height:1.05;letter-spacing:-.055em}h1 span,h2 span{color:var(--red)}h2{font-size:clamp(28px,4vw,42px);letter-spacing:-.04em;margin:0 0 10px}.muted{color:var(--muted)}.hero{padding:100px 0;background:radial-gradient(circle at 75% 50%,#b3204230,transparent 40%)}.hero-layout{display:grid;grid-template-columns:1.25fr .75fr;gap:30px;align-items:center}.heart{font-size:clamp(160px,20vw,260px);line-height:1;color:var(--red);text-align:center;text-shadow:12px 14px #78192b,0 0 60px #ff496966}.pill{display:inline-block;border:1px solid #b74257;border-radius:100px;padding:5px 12px;color:#ff9ba9;background:#ff425215;font-size:13px}.buttons{display:flex;flex-wrap:wrap;gap:10px;margin-top:25px}.btn{padding:12px 18px;border-radius:9px;color:#19080b;background:var(--red);font:700 14px system-ui;border:1px solid #ff7f91;cursor:pointer;display:inline-block}.btn.alt{background:#252a36;color:white;border-color:#5c6475}.btn:disabled{opacity:.5;cursor:not-allowed}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}.card{background:linear-gradient(145deg,#1a1e29,#11151d);border:1px solid var(--line);border-radius:15px;padding:25px}.card h3{font-size:21px;margin:0 0 6px}.card p{color:var(--muted);margin:0}.card .price{font-size:22px;font-weight:800;color:#ff8c9d;margin:12px 0}.band{background:#121620;border-block:1px solid var(--line)}.box{background:#171b27;border:1px solid var(--line);padding:28px;border-radius:16px}.section-heading{margin-bottom:26px}.field{display:grid;gap:5px;font-size:14px}form{display:grid;gap:14px;margin-top:20px}input,textarea,select{width:100%;padding:11px;border-radius:8px;background:#0c1018;border:1px solid #50576a;color:#fff;font:inherit}textarea{min-height:90px;resize:vertical}.status{font-size:14px;color:#ffd37d;min-height:1.3em}.statsline{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #333a4c;font-size:13px}.statsline span:last-child{color:#e9afba}.commands{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.command{border:1px solid var(--line);border-radius:9px;background:#1a1e28;padding:12px;display:flex;justify-content:space-between;gap:15px}.command code{color:#ff9aa9}footer{border-top:1px solid var(--line);padding:26px 0;color:var(--muted);font-size:13px}.join{text-align:center;background:linear-gradient(140deg,#451a29,#1b2035);padding:40px;border:1px solid #8f4051;border-radius:20px}.ip{margin:20px auto;font-size:18px;overflow-wrap:anywhere}.small{font-size:13px}.note{color:#b5bece;font-size:13px}code{color:#ffb1bd}.offer-title{min-height:54px}
+@media(max-width:800px){.hero-layout{grid-template-columns:1fr}.heart{font-size:130px}.grid{grid-template-columns:repeat(2,1fr)}.nav{gap:8px}.hero{padding:55px 0}}
+@media(max-width:550px){.grid,.commands{grid-template-columns:1fr}.bar{flex-direction:column;padding:15px 0}.hero{padding:38px 0}section{padding:45px 0}.box{padding:19px}}
+</style></head>
 <body>
-<nav><div class="container navinner">
-<a class="brand" href="#home" aria-label="Diddyblud Lifesteal home"><span class="logo">♥</span><span class="pixel">DIDDYBLUD<br>LIFESTEAL</span></a>
-<button class="menu-button" id="menu" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">☰ Menu</button>
-<div class="links" id="navlinks"><a href="#features">Features</a><a href="#lifesteal">Lifesteal</a><a href="#commands">Commands</a><a href="#community">Community</a><a href="#level-shop">Level Shop</a><a href="#join">How to Join</a></div>
-<a class="btn small" href="#join">Play Now ↗</a>
-</div></nav>
+<header><div class="container bar"><a href="#home" class="brand">♥ DIDDYBLUD <span>LIFESTEAL</span></a><nav class="nav"><a href="#features">Features</a><a href="#level-shop">Level Shop</a><a href="#stats">Stats</a><a href="#applications">Apply</a><a href="#commands">Commands</a><a href="#join">Join</a></nav></div></header>
 <main>
-<header class="hero" id="home"><div class="container hero-grid">
-<div><div class="eyebrow">Minecraft • Survival • Lifesteal</div><h1>STEAL HEARTS.<br><span>RULE THE SMP.</span></h1><p class="lead">Build your empire, fight for your hearts, and become the richest player on Diddyblud Lifesteal. Every fight matters.</p><div class="actions"><a class="btn" href="#join">♥ Join the Server</a><a class="btn secondary" href="#features">Explore Features ↓</a></div></div>
-<div class="hero-art" aria-label="Large red Lifesteal heart illustration" role="img"><div class="orb"></div><div class="orbit"></div><div class="heart">♥</div><span class="spark s1">✦</span><span class="spark s2">✧</span><span class="spark s3">✦</span></div>
-</div></header>
-<section id="features"><div class="container"><div class="section-top"><span class="kicker">The experience</span><h2>More than ordinary survival.</h2><p class="muted">Level up your adventure with custom systems built around PvP, trading, building, and progression.</p></div>
-<div class="grid">
-<article class="card"><div class="emoji">❤️</div><h3>Lifesteal Hearts</h3><p>Fight for extra hearts, withdraw them, and trade with other players. Protect your last heart.</p></article>
-<article class="card"><div class="emoji">💰</div><h3>Money & Shards</h3><p>Earn currency, use physical money bills, and collect shards for special rewards.</p></article>
-<article class="card"><div class="emoji">🛒</div><h3>Custom Shop</h3><p>Browse shop categories, buy and sell items, and explore the special shard shop.</p></article>
-<article class="card"><div class="emoji">🔥</div><h3>Stackable Spawners</h3><p>Upgrade your farms using stackable spawners that generate resources into storage.</p></article>
-<article class="card"><div class="emoji">⚒️</div><h3>Powerful Items</h3><p>Discover custom tools including the 3×3 pickaxe, infinite rocket, and water bucket.</p></article>
-<article class="card"><div class="emoji">🏆</div><h3>Ranks & Kits</h3><p>Show off your rank, unlock kits, and compete for a place on the leaderboards.</p></article>
-<article class="card"><div class="emoji">🏠</div><h3>Homes & Teleports</h3><p>Set homes, request teleports, and use random teleport to explore fresh terrain.</p></article>
-<article class="card"><div class="emoji">📦</div><h3>Vaults & Auctions</h3><p>Store valuable items in player vaults and trade with the community.</p></article>
-<article class="card"><div class="emoji">🌲</div><h3>Veinminer & Tree Feller</h3><p>Mine ore veins and fell trees faster, leaving more time for adventures.</p></article>
+<section class="hero" id="home"><div class="container hero-layout"><div><span class="pill">Minecraft Survival • Lifesteal SMP</span><h1>STEAL HEARTS.<br><span>RULE THE SMP.</span></h1><p class="muted">Fight for hearts, earn levels, and unlock special ranks and rewards. Your Diddyblud Lifesteal journey begins here.</p><div class="buttons"><a href="#join" class="btn">♥ Join the server</a><a href="#level-shop" class="btn alt">Explore Level Shop</a></div></div><div class="heart" aria-label="Red heart">♥</div></div></section>
+<section id="features"><div class="container"><div class="section-heading"><h2>Discover the server</h2><p class="muted">Custom gameplay, player progression, and a connected community.</p></div><div class="grid">
+<div class="card"><h3>♥ Lifesteal</h3><p>Earn, trade, and protect your hearts through PvP.</p></div><div class="card"><h3>💰 Economy</h3><p>Make in-game money and exchange it for levels.</p></div><div class="card"><h3>🏆 Ranks & Kits</h3><p>Earn levels and redeem them for configured ranks and other rewards.</p></div>
+<div class="card"><h3>🔥 Spawners</h3><p>Stack special spawners to grow resource farms.</p></div><div class="card"><h3>⚒ Custom Items</h3><p>Powerful tools, rockets, and useful custom items.</p></div><div class="card"><h3>🏡 Travel & Storage</h3><p>Homes, random teleportation, auctions, and vaults.</p></div></div></div></section>
+<section id="level-shop" class="band"><div class="container"><div class="section-heading"><h2>Spend your <span>levels</span></h2><p class="muted">Earn levels by playing or convert in-game money using <code>/levels buy</code>. Spend levels on your server's rewards — no real-money payment required.</p><p class="status" id="level-rates">Waiting for level-shop configuration from Minecraft…</p></div><div id="level-offers" class="grid"></div>
+<div class="box" style="max-width:680px;margin-top:25px"><h3>Redeem a rank or reward</h3><p class="muted">Join the server, run <code>/levels code</code> in Minecraft, and enter that one-time code here within 5 minutes. Stay online to receive the reward.</p><form id="level-form"><label class="field">Minecraft username<input name="player" required maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Your Minecraft username"></label><label class="field">One-time code<input name="code" required minlength="10" maxlength="10" autocomplete="off" placeholder="10-character in-game code"></label><label class="field">Rank or reward<select id="level-offer" name="offer" required><option value="">Waiting for server…</option></select></label><button id="level-submit" class="btn" type="submit" disabled>Spend levels</button><p id="level-feedback" class="status" role="status" aria-live="polite"></p></form></div></div></section>
+<section id="stats"><div class="container"><div class="section-heading"><h2>Online player stats</h2><p id="stats-state" class="muted">Waiting for your Minecraft server…</p></div><div id="player-stats" class="box"></div></div></section>
+<section id="applications" class="band"><div class="container"><div class="section-heading"><h2>Community & applications</h2><p class="muted">Apply to help the staff team or send a separate rank/reward request for staff review.</p></div><div class="grid">
+<div class="box"><h3>Staff application</h3><form id="application-form"><label class="field">Minecraft username<input name="player" required maxlength="16"></label><label class="field">Discord username<input name="discord" required maxlength="80"></label><label class="field">Role<select name="role"><option>Helper</option><option>Moderator</option><option>Builder</option><option>Developer</option></select></label><label class="field">Why should we choose you?<textarea name="notes" required minlength="15" maxlength="1000"></textarea></label><button type="submit" class="btn">Send application</button><p class="status" role="status"></p></form></div>
+<div class="box"><h3>Staff-reviewed request</h3><p class="note">This is not the level shop or a payment form. Staff must verify eligibility independently before manually granting anything.</p><form id="order-form"><label class="field">Minecraft username<input name="player" required maxlength="16"></label><label class="field">Discord username<input name="discord" required maxlength="80"></label><label class="field">Request<select name="product"><option value="starter">Starter Rank</option><option value="champion">Champion Rank</option><option value="legend">Legend Rank</option><option value="reward">Other Reward</option></select></label><button class="btn" type="submit">Request staff review</button><p class="status" role="status"></p></form></div>
 </div></div></section>
-<section class="band" id="lifesteal"><div class="container two-col"><div><span class="kicker">The heart of the server</span><h2>Risk it all for one more heart.</h2><p class="muted">On a Lifesteal SMP, hearts aren't just health — they're power. Win PvP encounters to increase your advantage, and think carefully before challenging another player.</p><p class="muted">Your hearts can be withdrawn and exchanged. Run out of hearts, and you're out of the fight.</p><a href="#join" class="btn secondary">Start your journey ↗</a></div><div class="showcase"><div class="pixel">♥ LIFESTEAL</div><ul><li>Gain hearts through PvP</li><li>Withdraw and trade hearts</li><li>Custom heart items</li><li>Lose your final heart and face a ban</li></ul><div><span class="tag">PVP</span><span class="tag">SURVIVAL</span><span class="tag">HEARTS</span></div></div></div></section>
-<section id="commands"><div class="container"><div class="section-top"><span class="kicker">Get started</span><h2>Useful player commands.</h2><p class="muted">Get around, manage your resources, and discover what the server offers.</p></div>
-<div class="command-grid">
-<div class="command"><code>/shop</code><span>Open the server shop</span></div>
-<div class="command"><code>/sethome</code><span>Save your home location</span></div>
-<div class="command"><code>/tpa</code><span>Request a teleport</span></div>
-<div class="command"><code>/rtp</code><span>Random teleport menu</span></div>
-<div class="command"><code>/sell</code><span>Sell your items</span></div>
-<div class="command"><code>/money withdraw</code><span>Withdraw physical money</span></div>
-<div class="command"><code>/sidebar</code><span>Toggle your scoreboard</span></div>
-<div class="command"><code>/spawn</code><span>Return to spawn</span></div>
+<section id="commands"><div class="container"><div class="section-heading"><h2>Useful commands</h2></div><div class="commands">
+<div class="command"><code>/levels</code><span>Level balance</span></div><div class="command"><code>/levels buy</code><span>Convert money to levels</span></div><div class="command"><code>/levels code</code><span>Get website verification code</span></div><div class="command"><code>/shop</code><span>Open server shop</span></div>
+<div class="command"><code>/sethome</code><span>Set a home</span></div><div class="command"><code>/tpa</code><span>Teleport request</span></div><div class="command"><code>/rtp</code><span>Random teleport</span></div><div class="command"><code>/spawn</code><span>Return to spawn</span></div>
 </div></div></section>
-<section id="community"><div class="container"><div class="section-top"><span class="kicker">Connected community</span><h2>Server hub</h2><p class="muted">See player stats, apply to join the team, or request a rank or reward. Requests are reviewed by staff; this website does not process payments.</p></div><div class="grid"><article class="card"><div class="emoji">📊</div><h3>Player stats</h3><p id="stats-state">Set up the bridge to show live player stats.</p><div id="player-stats"></div></article><article class="card"><div class="emoji">📋</div><h3>Staff application</h3><form id="application-form"><label>Minecraft username<input required name="player" maxlength="16" placeholder="Your username"></label><label>Discord username<input required name="discord" maxlength="80" placeholder="Your Discord username"></label><label>Role<select name="role"><option>Helper</option><option>Moderator</option><option>Builder</option><option>Developer</option></select></label><label>Why should we choose you?<textarea name="notes" required minlength="15" maxlength="1000"></textarea></label><button class="btn small" type="submit">Send application</button><p class="status" role="status"></p></form></article><article class="card"><div class="emoji">🎁</div><h3>Ranks & rewards</h3><form id="order-form"><label>Minecraft username<input required name="player" maxlength="16"></label><label>Discord username<input required name="discord" maxlength="80"></label><label>Request<select name="product"><option value="starter">Starter Rank</option><option value="champion">Champion Rank</option><option value="legend">Legend Rank</option><option value="reward">Reward Request</option></select></label><button class="btn small" type="submit">Request staff review</button><p class="status" role="status"></p></form><p class="note">No payment is taken here. Staff must verify any purchase separately before granting items.</p></article></div></div></section><section id="level-shop"><div class="container"><div class="section-top"><span class="kicker">Earn & spend</span><h2>Level rewards shop</h2><p class="muted">Earn a level for every 30 minutes online or exchange $10,000,000 in-game with <code>/levels buy</code>. Spend levels on ranks or rewards using a verification code from Minecraft.</p></div><p id="level-rates" class="muted">Waiting for your Minecraft server's level shop configuration…</p><div id="level-offers" class="grid"></div><div class="showcase" style="max-width:620px;margin-top:25px"><h3>Redeem your levels</h3><p class="muted">Stay online in Minecraft. Type <code>/levels code</code> in chat, then enter the code below. It expires after 5 minutes.</p><form id="level-purchase-form"><label>Minecraft username<input name="player" required maxlength="16" placeholder="Your Minecraft name"></label><label>Verification code<input name="code" required minlength="10" maxlength="10" placeholder="10-character code" autocomplete="off"></label><label>Choose a rank or reward<select name="offer" id="level-offer-select" required><option value="">Waiting for server shop…</option></select></label><button type="submit" class="btn" id="level-buy-button" disabled>Spend levels</button><p class="status" id="level-purchase-status" role="status" aria-live="polite"></p></form></div></div></section><section id="join" class="container"><div class="join"><span class="kicker">Ready to play?</span><h2>YOUR STORY STARTS HERE.</h2><p>Open Minecraft Java Edition, add a multiplayer server, and enter the server address.</p>
-<div class="server-ip"><strong><small>SERVER IP</small><span id="ip-text">Coming soon — server address not set</span></strong><button class="btn small secondary" id="copy-ip" disabled title="Server address will be added by the owner">Copy IP</button></div>
-<p id="copy-status" class="status" role="status" aria-live="polite"></p>
-<p class="note">The server owner can add the IP address and Discord invite in the website configuration. No address has been published here yet.</p>
-</div></section>
-</main>
-<footer><div class="container footerrow"><div>♥ Diddyblud Lifesteal • Minecraft SMP</div><div>Independent community server. Not affiliated with Mojang or Microsoft.</div></div></footer>
+<section id="join"><div class="container"><div class="join"><h2>Ready to join?</h2><p class="muted">Open Minecraft Java Edition, choose Multiplayer, and add Diddyblud Lifesteal.</p><div class="ip"><strong id="ip-text">Server address coming soon</strong></div><button id="copy-ip" class="btn alt" disabled>Copy server IP</button><p id="copy-status" class="status" role="status"></p></div></div></section>
+</main><footer><div class="container">♥ Diddyblud Lifesteal • Independent Minecraft community, not affiliated with Mojang or Microsoft.</div></footer>
 <script>
-// Owner configuration: replace empty strings with your actual server IP / Discord invitation.
-const CONFIG={serverIP:"",discordInvite:"",bridgeURL:"https://diddybludsmpwebsite.onrender.com"};
-const ip=document.getElementById('ip-text');const copy=document.getElementById('copy-ip');const status=document.getElementById('copy-status');
-if(CONFIG.serverIP.trim()){ip.textContent=CONFIG.serverIP.trim();copy.disabled=false;copy.title='Copy server IP';}
-copy.addEventListener('click',async()=>{if(!CONFIG.serverIP.trim())return;try{await navigator.clipboard.writeText(CONFIG.serverIP.trim());status.textContent='Server IP copied!';}catch(e){status.textContent='Select the server IP above to copy it manually.';}});
-const menu=document.getElementById('menu'),links=document.getElementById('navlinks');
-menu.addEventListener('click',()=>{const open=links.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
-links.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{links.classList.remove('open');menu.setAttribute('aria-expanded','false');}));
-
-// Enter the HTTPS URL of your deployed bridge above; never put a bot token or bridge secret here.
-const bridge=CONFIG.bridgeURL.trim().replace(/\\/$/,'');
-const statsState=document.getElementById('stats-state');
-const statsList=document.getElementById('player-stats');
-async function refreshStats(){
-if(!bridge)return;
-try{const response=await fetch(bridge+'/api/public/stats');if(!response.ok)throw Error('Server unavailable');const data=await response.json();statsState.textContent='Online players: '+Number(data.online||0)+(data.updatedAt?' • Updated '+new Date(data.updatedAt).toLocaleString():' • Waiting for Minecraft');
-statsList.replaceChildren();(Array.isArray(data.players)?data.players:[]).slice(0,50).forEach(p=>{const row=document.createElement('div');row.className='statrow';const name=document.createElement('span');name.textContent=p.name||'Player';const values=document.createElement('span');values.textContent='♥ '+Number(p.hearts||0)+' · (p.money||0).toLocaleString();row.append(name,values);statsList.append(row);});}catch(e){statsState.textContent='Player stats temporarily unavailable.';}}
-refreshStats();
-for(const [formId,endpoint] of [['application-form','applications'],['order-form','orders']]){
-const form=document.getElementById(formId);form.addEventListener('submit',async event=>{event.preventDefault();const output=form.querySelector('.status');if(!bridge){output.textContent='The bridge is not configured yet.';return;}const btn=form.querySelector('button');btn.disabled=true;output.textContent='Submitting…';try{const data=Object.fromEntries(new FormData(form));const response=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');output.textContent='Submitted! Reference: '+result.id;form.reset();}catch(e){output.textContent=e.message||'Could not submit.';}finally{btn.disabled=false;}});}
-
-// Levels and rewards are authored in the Paper server's config.yml, then mirrored here.
-const levelSelect=document.getElementById('level-offer-select');
-const levelButton=document.getElementById('level-buy-button');
-async function refreshLevelShop(){
-if(!bridge)return;
-try{
-const response=await fetch(bridge+'/api/public/level-shop');if(!response.ok)throw Error('Shop unavailable');
-const data=await response.json();const shop=data.shop;
+const CONFIG={serverIP:"",bridgeURL:"https://diddybludsmpwebsite.onrender.com"};
+const bridge=CONFIG.bridgeURL.replace(/\/$/,'');
+const ip=document.getElementById('ip-text'),copy=document.getElementById('copy-ip');
+if(CONFIG.serverIP){ip.textContent=CONFIG.serverIP;copy.disabled=false;}
+copy.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(CONFIG.serverIP);document.getElementById('copy-status').textContent='Copied!';}catch(e){document.getElementById('copy-status').textContent='Please copy the address manually.';}});
+async function loadStats(){
+try{const r=await fetch(bridge+'/api/public/stats');if(!r.ok)throw Error('Unavailable');const data=await r.json();
+document.getElementById('stats-state').textContent='Players online: '+Number(data.online||0)+(data.updatedAt?' • Updated '+new Date(data.updatedAt).toLocaleString():' • Awaiting Minecraft');
+const list=document.getElementById('player-stats');list.replaceChildren();
+const players=Array.isArray(data.players)?data.players:[];
+if(!players.length){list.textContent='No player data yet.';return;}
+for(const p of players.slice(0,80)){const row=document.createElement('div');row.className='statsline';const name=document.createElement('span');name.textContent=p.name||'Player';const score=document.createElement('span');score.textContent='♥ '+Number(p.hearts||0)+' · '+Number(p.levels||0)+' levels · $'+Number(p.money||0).toLocaleString();row.append(name,score);list.append(row);}
+}catch(e){document.getElementById('stats-state').textContent='Player stats unavailable at the moment.';}}
+async function loadLevelShop(){
+try{const response=await fetch(bridge+'/api/public/level-shop');if(!response.ok)throw Error('Unavailable');const data=await response.json();const shop=data.shop;
 if(!shop||!Array.isArray(shop.offers))return;
-document.getElementById('level-rates').textContent='Earn 1 level every '+shop.playtimeMinutes+' minutes online, or buy 1 level for 
-</body></html>+Number(p.money||0).toLocaleString();row.append(name,values);statsList.append(row);});}catch(e){statsState.textContent='Player stats temporarily unavailable.';}}
-refreshStats();
-for(const [formId,endpoint] of [['application-form','applications'],['order-form','orders']]){
-const form=document.getElementById(formId);form.addEventListener('submit',async event=>{event.preventDefault();const output=form.querySelector('.status');if(!bridge){output.textContent='The bridge is not configured yet.';return;}const btn=form.querySelector('button');btn.disabled=true;output.textContent='Submitting…';try{const data=Object.fromEntries(new FormData(form));const response=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');output.textContent='Submitted! Reference: '+result.id;form.reset();}catch(e){output.textContent=e.message||'Could not submit.';}finally{btn.disabled=false;}});}
-</script>
-</body></html>+Number(shop.moneyPerLevel).toLocaleString()+' in-game.';
-levelSelect.replaceChildren();
-const first=document.createElement('option');first.value='';first.textContent='Choose a rank or reward';levelSelect.append(first);
-const board=document.getElementById('level-offers');board.replaceChildren();
-for(const offer of shop.offers){
-const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';levelSelect.append(option);
-const card=document.createElement('article');card.className='card';
-const title=document.createElement('h3');title.textContent=offer.name;
-const price=document.createElement('p');price.className='cost';price.textContent=offer.cost+' levels';
-const type=document.createElement('p');type.textContent=offer.type==='rank'?'In-game rank':'In-game reward';
-card.append(title,price,type);board.append(card);
-}
-levelButton.disabled=shop.offers.length===0;
-}catch(e){document.getElementById('level-rates').textContent='Level shop is temporarily unavailable.';}
-}
-refreshLevelShop();
-document.getElementById('level-purchase-form').addEventListener('submit',async e=>{
-e.preventDefault();
-const form=e.currentTarget,output=document.getElementById('level-purchase-status');levelButton.disabled=true;
-output.textContent='Sending your request…';
-try{
-const obj=Object.fromEntries(new FormData(form));
-const response=await fetch(bridge+'/api/public/level-purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});
-const data=await response.json();if(!response.ok)throw Error(data.error||'Could not send request');
-output.textContent='Request queued. Stay online and check Minecraft chat for purchase confirmation.';
-form.reset();
-}catch(error){output.textContent=error.message||'Request failed';}
-finally{levelButton.disabled=false;}
+document.getElementById('level-rates').textContent='1 level per '+shop.playtimeMinutes+' minutes played, or $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game per level.';
+const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');board.replaceChildren();select.replaceChildren();
+const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a reward';select.append(placeholder);
+for(const offer of shop.offers){const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.className='offer-title';h.textContent=offer.name;const price=document.createElement('p');price.className='price';price.textContent=offer.cost+' levels';const type=document.createElement('p');type.textContent=offer.type==='rank'?'Rank':'In-game reward';card.append(h,price,type);board.append(card);const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';select.append(option);}
+document.getElementById('level-submit').disabled=!shop.offers.length;
+}catch(e){document.getElementById('level-rates').textContent='Level shop is currently unavailable.';}}
+document.getElementById('level-form').addEventListener('submit',async e=>{
+e.preventDefault();const form=e.currentTarget,btn=document.getElementById('level-submit'),out=document.getElementById('level-feedback');btn.disabled=true;out.textContent='Sending purchase…';
+try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/level-purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Request queued! Stay online and check Minecraft chat for confirmation.';form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}
 });
-</script>
-</body></html>+Number(p.money||0).toLocaleString();row.append(name,values);statsList.append(row);});}catch(e){statsState.textContent='Player stats temporarily unavailable.';}}
-refreshStats();
 for(const [formId,endpoint] of [['application-form','applications'],['order-form','orders']]){
-const form=document.getElementById(formId);form.addEventListener('submit',async event=>{event.preventDefault();const output=form.querySelector('.status');if(!bridge){output.textContent='The bridge is not configured yet.';return;}const btn=form.querySelector('button');btn.disabled=true;output.textContent='Submitting…';try{const data=Object.fromEntries(new FormData(form));const response=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');output.textContent='Submitted! Reference: '+result.id;form.reset();}catch(e){output.textContent=e.message||'Could not submit.';}finally{btn.disabled=false;}});}
-</script>
-</body></html>
+const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}});}
+loadStats();loadLevelShop();
+</script></body></html>
