@@ -9,7 +9,7 @@ const secret=env('BRIDGE_SECRET');
 const token=env('DISCORD_TOKEN');
 if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
 const dataFile=env('DATA_FILE','./bridge-data.json');
-let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null};
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]}};
 try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
 const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
@@ -60,6 +60,7 @@ if(req.method==='OPTIONS'){reply(res,204,{},origin);return;}
 const url=new URL(req.url,'http://localhost');
 if(req.method==='GET'&&url.pathname==='/health'){reply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt},origin);return;}
 if(req.method==='GET'&&url.pathname==='/api/public/stats'){reply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt},origin);return;}
+if(req.method==='GET'&&url.pathname==='/api/public/leaderboards'){reply(res,200,{leaderboards:db.leaderboards,updatedAt:db.updatedAt},origin);return;}
 if(req.method==='GET'&&url.pathname==='/api/public/level-shop'){reply(res,200,{shop:db.levelShop,updatedAt:db.updatedAt},origin);return;}
 if(url.pathname.startsWith('/api/server/')){
 if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
@@ -67,6 +68,19 @@ if(req.method==='POST'&&url.pathname==='/api/server/sync'){
 try{const obj=await body(req);if(!Array.isArray(obj.players)||obj.players.length>250){reply(res,400,{error:'Invalid players'},origin);return;}
 db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,levels:Math.max(0,Number(p.levels)||0),rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
 db.online=db.players.length;db.updatedAt=new Date().toISOString();
+if(obj.leaderboards&&typeof obj.leaderboards==='object'){
+  const updated={money:[],playtime:[],hearts:[]};
+  for(const kind of Object.keys(updated)){
+    const items=obj.leaderboards[kind];
+    if(!Array.isArray(items))continue;
+    updated[kind]=items.slice(0,10).map(row=>({
+      name:clean(row?.name,16),
+      value:Number(row?.value)
+    })).filter(row=>validPlayer(row.name)&&Number.isSafeInteger(row.value)&&row.value>=0);
+    updated[kind].sort((a,b)=>b.value-a.value);
+  }
+  db.leaderboards=updated;
+}
 if(obj.levelShop && Array.isArray(obj.levelShop.offers)){
   const offers=obj.levelShop.offers.slice(0,40).map(o=>({id:clean(o.id,32),name:safeText(o.name,70),type:clean(o.type,20),cost:Number(o.cost)})).filter(o=>/^[a-z0-9_-]{1,32}$/.test(o.id)&&['rank','money','shards'].includes(o.type)&&Number.isInteger(o.cost)&&o.cost>0);
   db.levelShop={offers,playtimeMinutes:Math.max(1,Number(obj.levelShop.playtimeMinutes)||30),moneyPerLevel:Math.max(1,Number(obj.levelShop.moneyPerLevel)||10000000)};
