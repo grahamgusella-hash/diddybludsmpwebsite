@@ -62,51 +62,7 @@ document.getElementById('stats-state').textContent=current?'Players online: '+Nu
 const list=document.getElementById('player-stats');list.replaceChildren();
 const players=current&&Array.isArray(data.players)?data.players:[];
 if(!players.length){list.textContent=current?'No players online right now.':'Live player stats will reappear when Minecraft reconnects.';return;}
-for(const p of players.slice(0,80)){const row=document.createElement('div');row.className='statsline';const name=document.createElement('span');name.textContent=p.name||'Player';const score=document.createElement('span');score.textContent='♥ '+Number(p.hearts||0)+' · '+Number(p.levels||0)+' levels · row.append(name,score);list.append(row);}
-}catch(e){document.getElementById('stats-state').textContent='Player stats unavailable at the moment.';}}
-
-async function loadLeaderboards(){
-const status=document.getElementById('leaderboards-state');
-try{
-const response=await fetch(bridge+'/api/public/leaderboards');
-if(!response.ok)throw Error('Unavailable');
-const data=await response.json();
-const boards=data.leaderboards||{};
-for(const type of ['money','playtime','hearts']){
-const element=document.getElementById('leaders-'+type);
-element.replaceChildren();
-const scores=Array.isArray(boards[type])?boards[type]:[];
-if(!scores.length){const empty=document.createElement('p');empty.className='muted small';empty.textContent='No scores recorded yet.';element.append(empty);continue;}
-scores.slice(0,10).forEach((p,i)=>{
-const row=document.createElement('div');row.className='statsline';
-const name=document.createElement('span');name.textContent=(i+1)+'. '+p.name;
-const value=document.createElement('span');
-const n=Number(p.value)||0;
-value.textContent=type==='money'?String.fromCharCode(36)+n.toLocaleString():type==='playtime'?Math.floor(n/3600)+'h '+Math.floor((n%3600)/60)+'m':n.toLocaleString()+' ♥';
-row.append(name,value);element.append(row);
-});
-}
-status.textContent=data.updatedAt?'Last updated '+new Date(data.updatedAt).toLocaleString()+(Date.now()-new Date(data.updatedAt).getTime()>120000?' • Server may be offline':''):'Waiting for the Minecraft plugin to sync.';
-}catch(e){status.textContent='Leaderboards temporarily unavailable.';}
-}
-async function loadLevelShop(){
-try{const response=await fetch(bridge+'/api/public/level-shop');if(!response.ok)throw Error('Unavailable');const data=await response.json();const shop=data.shop;
-if(!shop||!Array.isArray(shop.offers))return;
-document.getElementById('level-rates').textContent='1 level per '+shop.playtimeMinutes+' minutes played, or $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game per level.';
-const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');board.replaceChildren();select.replaceChildren();
-const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a reward';select.append(placeholder);
-for(const offer of shop.offers){const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.className='offer-title';h.textContent=offer.name;const price=document.createElement('p');price.className='price';price.textContent=offer.cost+' levels';const type=document.createElement('p');type.textContent=offer.type==='rank'?'Rank':'In-game reward';card.append(h,price,type);board.append(card);const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';select.append(option);}
-document.getElementById('level-submit').disabled=!shop.offers.length;
-}catch(e){document.getElementById('level-rates').textContent='Level shop is currently unavailable.';}}
-document.getElementById('level-form').addEventListener('submit',async e=>{
-e.preventDefault();const form=e.currentTarget,btn=document.getElementById('level-submit'),out=document.getElementById('level-feedback');btn.disabled=true;out.textContent='Sending purchase…';
-try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/level-purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Purchase sent! Your Minecraft plugin will automatically grant the rank or reward after checking your code and level balance. Check Minecraft chat for confirmation.';form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}
-});
-for(const [formId,endpoint] of [['application-form','applications']]){
-const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}});}
-loadStats();loadLevelShop();loadLeaderboards();loadApplicationRoles();
-setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();loadLevelShop();}},30000);
-</script></body></html>+Number(p.money||0).toLocaleString()+' · '+Number(p.shards||0).toLocaleString()+' shards · '+Math.floor(Number(p.playtime||0)/3600)+'h '+Math.floor((Number(p.playtime||0)%3600)/60)+'m'+(p.rank?' · '+p.rank:'');row.append(name,score);list.append(row);}
+for(const p of players.slice(0,80)){const row=document.createElement('div');row.className='statsline';const name=document.createElement('span');name.textContent=p.name||'Player';const score=document.createElement('span');score.textContent='♥ '+Number(p.hearts||0)+' · '+Number(p.levels||0)+' levels · '+String.fromCharCode(36)+Number(p.money||0).toLocaleString()+' · '+Number(p.shards||0).toLocaleString()+' shards · '+Math.floor(Number(p.playtime||0)/3600)+'h '+Math.floor((Number(p.playtime||0)%3600)/60)+'m'+(p.rank?' · '+p.rank:'');row.append(name,score);list.append(row);}
 }catch(e){document.getElementById('stats-state').textContent='Player stats unavailable at the moment.';}}
 
 async function loadLeaderboards(){
