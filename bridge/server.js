@@ -1,0 +1,90 @@
+import http from 'node:http';
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
+
+const env=(key,fallback='')=>process.env[key]||fallback;
+const port=Number(env('PORT','3000'));
+const secret=env('BRIDGE_SECRET');
+const token=env('DISCORD_TOKEN');
+if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
+const dataFile=env('DATA_FILE','./bridge-data.json');
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[]};
+try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
+const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
+const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
+const chatId=env('DISCORD_CHAT_CHANNEL_ID'),announcementId=env('DISCORD_ANNOUNCEMENTS_CHANNEL_ID');
+const appId=env('DISCORD_APPLICATIONS_CHANNEL_ID'),ordersId=env('DISCORD_ORDERS_CHANNEL_ID');
+const staffRole=env('DISCORD_STAFF_ROLE_ID');
+const allowedOrigin=env('SITE_ORIGIN','https://grahamgusella-hash.github.io');
+const recent=new Map();
+const clean=(s,max=200)=>String(s??'').replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max);
+const safeText=(s,max=200)=>clean(s,max).replace(/@/g,'＠');
+const enqueue=(action)=>{db.queue.push({id:crypto.randomUUID(),...action});if(db.queue.length>300)db.queue=db.queue.slice(-300);save();};
+const send=async(channelId,content)=>{if(!channelId||!client.isReady())return;try{const ch=await client.channels.fetch(channelId);if(ch?.isTextBased())await ch.send({content:content.slice(0,1900),allowedMentions:{parse:[]}});}catch(e){console.warn('Discord send:',e.message);}};
+const reply=(res,status,payload,origin)=>{const headers={'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Access-Control-Allow-Origin':origin===allowedOrigin?allowedOrigin:'null','Vary':'Origin','Access-Control-Allow-Methods':'GET, POST, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'};res.writeHead(status,headers);res.end(JSON.stringify(payload));};
+const verify=(input)=>{if(typeof input!=='string')return false;const a=Buffer.from(input),b=Buffer.from('Bearer '+secret);return a.length===b.length&&crypto.timingSafeEqual(a,b);};
+const throttle=(ip)=>{const now=Date.now();const hist=(recent.get(ip)||[]).filter(t=>now-t<3600000);if(hist.length>=6)return true;hist.push(now);recent.set(ip,hist);if(recent.size>10000)recent.clear();return false;};
+const body=async(req)=>{let s='';for await(const part of req){s+=part;if(s.length>18000)throw Error('Request too large');}return JSON.parse(s||'{}');};
+const validPlayer=(s)=>/^[A-Za-z0-9_]{3,16}$/.test(s);
+const VALID_PRODUCTS={starter:'Starter Rank',champion:'Champion Rank',legend:'Legend Rank',reward:'Reward Request'};
+const commands=[
+new SlashCommandBuilder().setName('mcannounce').setDescription('Send an announcement to Minecraft').addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)),
+new SlashCommandBuilder().setName('mckick').setDescription('Kick an online Minecraft player').addStringOption(o=>o.setName('player').setDescription('Player username').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false)),
+new SlashCommandBuilder().setName('approveorder').setDescription('Approve a manually verified website request').addStringOption(o=>o.setName('id').setDescription('Order ID').setRequired(true)),
+new SlashCommandBuilder().setName('rejectorder').setDescription('Reject a website request').addStringOption(o=>o.setName('id').setDescription('Order ID').setRequired(true))
+];
+client.on(Events.ClientReady,async()=>{console.log('Discord connected as '+client.user.tag);const guild=env('DISCORD_GUILD_ID');if(guild){try{const rest=new REST({version:'10'}).setToken(token);await rest.put(Routes.applicationGuildCommands(client.user.id,guild),{body:commands.map(x=>x.toJSON())});console.log('Staff slash commands registered');}catch(e){console.error('Command registration:',e.message);}}});
+client.on(Events.MessageCreate,m=>{if(m.author.bot||m.channelId!==chatId||!m.inGuild())return;const msg=safeText(m.content,220);if(msg)enqueue({type:'chat',text:'[Discord] '+safeText(m.member?.displayName||m.author.username,40)+': '+msg});});
+client.on(Events.InteractionCreate,async i=>{
+if(!i.isChatInputCommand()||!commands.some(c=>c.name===i.commandName))return;
+const ok=i.inGuild()&&(i.memberPermissions?.has(PermissionFlagsBits.Administrator)||(staffRole&&i.member?.roles?.cache?.has(staffRole)));
+if(!ok){await i.reply({content:'You are not authorized to use Minecraft staff commands.',ephemeral:true});return;}
+const name=i.commandName;
+if(name==='mcannounce'){const msg=safeText(i.options.getString('message'),250);if(!msg){await i.reply({content:'Message cannot be empty.',ephemeral:true});return;}enqueue({type:'announce',text:msg});await i.reply({content:'Queued announcement for Minecraft.',ephemeral:true});return;}
+if(name==='mckick'){const player=i.options.getString('player');if(!validPlayer(player)){await i.reply({content:'Invalid Minecraft username.',ephemeral:true});return;}enqueue({type:'kick',player,reason:safeText(i.options.getString('reason')||'Removed by staff',100)});await i.reply({content:'Kick request queued (online players only).',ephemeral:true});return;}
+const id=i.options.getString('id');const order=db.orders.find(o=>o.id===id);
+if(!order){await i.reply({content:'Order ID not found.',ephemeral:true});return;}
+if(order.status!=='pending'){await i.reply({content:'Request has already been processed.',ephemeral:true});return;}
+if(name==='rejectorder'){order.status='rejected';order.staff=i.user.id;save();await i.reply({content:'Request rejected.',ephemeral:true});return;}
+order.status='approved';order.staff=i.user.id;
+if(order.product==='reward'){save();await i.reply({content:'Marked approved. Reward requests have no automatic in-game action; deliver manually.',ephemeral:true});return;}
+const rank={starter:'starter',champion:'champion',legend:'legend'}[order.product];
+enqueue({type:'rank',player:order.player,rank});
+await i.reply({content:'Rank grant queued. **Confirm delivery in-game.** Ensure this request was separately verified before approval.',ephemeral:true});
+});
+client.login(token).catch(e=>console.error('Discord login failed:',e.message));
+const server=http.createServer(async(req,res)=>{
+const origin=req.headers.origin;
+if(req.method==='OPTIONS'){reply(res,204,{},origin);return;}
+const url=new URL(req.url,'http://localhost');
+if(req.method==='GET'&&url.pathname==='/health'){reply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt},origin);return;}
+if(req.method==='GET'&&url.pathname==='/api/public/stats'){reply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt},origin);return;}
+if(url.pathname.startsWith('/api/server/')){
+if(!verify(req.headers.authorization)){reply(res,401,{error:'Unauthorized'},origin);return;}
+if(req.method==='POST'&&url.pathname==='/api/server/sync'){
+try{const obj=await body(req);if(!Array.isArray(obj.players)||obj.players.length>250){reply(res,400,{error:'Invalid players'},origin);return;}
+db.players=obj.players.map(p=>({name:clean(p.name,16),money:Number(p.money)||0,shards:Number(p.shards)||0,hearts:Number(p.hearts)||0,rank:clean(p.rank,40)})).filter(p=>validPlayer(p.name));
+db.online=db.players.length;db.updatedAt=new Date().toISOString();
+for(const line of (Array.isArray(obj.chat)?obj.chat.slice(0,20):[])){const msg=safeText(line,240);if(msg)await send(chatId,'🎮 '+msg);}
+const queue=db.queue.splice(0,30);save();reply(res,200,{commands:queue},origin);
+}catch(e){reply(res,400,{error:'Invalid sync: '+e.message},origin);}return;}
+reply(res,404,{error:'Not found'},origin);return;
+}
+if(req.method==='POST'&&(url.pathname==='/api/public/applications'||url.pathname==='/api/public/orders')){
+if(origin!==allowedOrigin){reply(res,403,{error:'Website origin not allowed'},origin);return;}
+const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0];if(throttle(ip)){reply(res,429,{error:'Too many requests. Try again later.'},origin);return;}
+try{const v=await body(req);const player=clean(v.player,16),discord=clean(v.discord,80),notes=safeText(v.notes,1000);
+if(!validPlayer(player)||discord.length<2||discord.length>80){reply(res,400,{error:'Enter a valid Minecraft username and Discord username.'},origin);return;}
+const id=crypto.randomUUID().slice(0,8);
+if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!['Helper','Moderator','Builder','Developer'].includes(role)||notes.length<15){reply(res,400,{error:'Choose a role and write at least 15 characters.'},origin);return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);reply(res,201,{ok:true,id},origin);return;}
+const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){reply(res,400,{error:'Invalid request type'},origin);return;}
+db.orders.push({id,player,discord,product,status:'pending',createdAt:new Date().toISOString()});db.orders=db.orders.slice(-500);save();
+await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must verify eligibility before /approveorder.');
+reply(res,201,{ok:true,id,message:'Request submitted. This is not a purchase or payment confirmation.'});return;
+}catch(e){reply(res,400,{error:'Invalid submission: '+e.message},origin);return;}
+}
+reply(res,404,{error:'Not found'},origin);
+});
+server.listen(port,()=>console.log('Bridge listening on '+port));
+process.on('SIGTERM',()=>{save();client.destroy();server.close();});
