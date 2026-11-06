@@ -76,7 +76,7 @@ footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:1
 <footer><div class="container footerrow"><div>♥ Diddyblud Lifesteal • Minecraft SMP</div><div>Independent community server. Not affiliated with Mojang or Microsoft.</div></div></footer>
 <script>
 // Owner configuration: replace empty strings with your actual server IP / Discord invitation.
-const CONFIG={serverIP:"",discordInvite:"",bridgeURL:""};
+const CONFIG={serverIP:"",discordInvite:"",bridgeURL:"https://diddybludsmpwebsite.onrender.com"};
 const ip=document.getElementById('ip-text');const copy=document.getElementById('copy-ip');const status=document.getElementById('copy-status');
 if(CONFIG.serverIP.trim()){ip.textContent=CONFIG.serverIP.trim();copy.disabled=false;copy.title='Copy server IP';}
 copy.addEventListener('click',async()=>{if(!CONFIG.serverIP.trim())return;try{await navigator.clipboard.writeText(CONFIG.serverIP.trim());status.textContent='Server IP copied!';}catch(e){status.textContent='Select the server IP above to copy it manually.';}});
