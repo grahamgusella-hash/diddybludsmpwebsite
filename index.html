@@ -63,23 +63,7 @@ const row=document.createElement('div');row.className='statsline';
 const name=document.createElement('span');name.textContent=(i+1)+'. '+p.name;
 const value=document.createElement('span');
 const n=Number(p.value)||0;
-value.textContent=type==='money'?'
-try{const response=await fetch(bridge+'/api/public/level-shop');if(!response.ok)throw Error('Unavailable');const data=await response.json();const shop=data.shop;
-if(!shop||!Array.isArray(shop.offers))return;
-document.getElementById('level-rates').textContent='1 level per '+shop.playtimeMinutes+' minutes played, or $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game per level.';
-const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');board.replaceChildren();select.replaceChildren();
-const placeholder=document.createElement('option');placeholder.value='';placeholder.textContent='Choose a reward';select.append(placeholder);
-for(const offer of shop.offers){const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.className='offer-title';h.textContent=offer.name;const price=document.createElement('p');price.className='price';price.textContent=offer.cost+' levels';const type=document.createElement('p');type.textContent=offer.type==='rank'?'Rank':'In-game reward';card.append(h,price,type);board.append(card);const option=document.createElement('option');option.value=offer.id;option.textContent=offer.name+' — '+offer.cost+' levels';select.append(option);}
-document.getElementById('level-submit').disabled=!shop.offers.length;
-}catch(e){document.getElementById('level-rates').textContent='Level shop is currently unavailable.';}}
-document.getElementById('level-form').addEventListener('submit',async e=>{
-e.preventDefault();const form=e.currentTarget,btn=document.getElementById('level-submit'),out=document.getElementById('level-feedback');btn.disabled=true;out.textContent='Sending purchase…';
-try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/level-purchase',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(request)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Purchase sent! Your Minecraft plugin will automatically grant the rank or reward after checking your code and level balance. Check Minecraft chat for confirmation.';form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}
-});
-for(const [formId,endpoint] of [['application-form','applications']]){
-const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err.message||'Request failed';}finally{btn.disabled=false;}});}
-loadStats();loadLevelShop();loadLeaderboards();
-</script></body></html>+n.toLocaleString():type==='playtime'?Math.floor(n/3600)+'h '+Math.floor((n%3600)/60)+'m':n.toLocaleString()+' ♥';
+value.textContent=type==='money'?String.fromCharCode(36)+n.toLocaleString():type==='playtime'?Math.floor(n/3600)+'h '+Math.floor((n%3600)/60)+'m':n.toLocaleString()+' ♥';
 row.append(name,value);element.append(row);
 });
 }
