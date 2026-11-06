@@ -29,13 +29,13 @@ footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:1
 @media(max-width:800px){.hero-grid,.two-col{grid-template-columns:1fr}.hero{padding:65px 0}.hero-art{min-height:245px;grid-row:1}.heart{font-size:180px}.orbit{width:230px;height:230px}.grid{grid-template-columns:repeat(2,1fr)}.menu-button{display:block}.links{display:none;position:absolute;top:76px;left:0;right:0;background:#11151f;border-bottom:1px solid var(--line);padding:20px;flex-direction:column;align-items:stretch}.links.open{display:flex}.links a{padding:5px}.navinner>.btn{display:none}}
 @media(max-width:560px){.grid,.command-grid{grid-template-columns:1fr}.container{width:min(100% - 28px,1120px)}.hero-art{min-height:210px}.hero{padding-top:38px}.heart{font-size:150px}.join{padding:30px 18px}section{padding:50px 0}.server-ip strong{min-width:0}.command{align-items:flex-start;flex-direction:column;gap:3px}.command span{text-align:left}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
-</style>
+#community form{display:grid;gap:12px;margin-top:12px}#community label{display:grid;gap:4px;color:#c9cfdb;font-size:13px}#community input,#community select,#community textarea{width:100%;background:#0b0e15;border:1px solid #414758;color:white;border-radius:7px;padding:10px;font:inherit}#community textarea{min-height:90px;resize:vertical}#player-stats{font-size:13px;margin-top:14px;max-height:250px;overflow:auto}#player-stats .statrow{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid #303544;padding:8px 0}</style>
 </head>
 <body>
 <nav><div class="container navinner">
 <a class="brand" href="#home" aria-label="Diddyblud Lifesteal home"><span class="logo">♥</span><span class="pixel">DIDDYBLUD<br>LIFESTEAL</span></a>
 <button class="menu-button" id="menu" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">☰ Menu</button>
-<div class="links" id="navlinks"><a href="#features">Features</a><a href="#lifesteal">Lifesteal</a><a href="#commands">Commands</a><a href="#join">How to Join</a></div>
+<div class="links" id="navlinks"><a href="#features">Features</a><a href="#lifesteal">Lifesteal</a><a href="#commands">Commands</a><a href="#community">Community</a><a href="#join">How to Join</a></div>
 <a class="btn small" href="#join">Play Now ↗</a>
 </div></nav>
 <main>
@@ -67,7 +67,7 @@ footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:1
 <div class="command"><code>/sidebar</code><span>Toggle your scoreboard</span></div>
 <div class="command"><code>/spawn</code><span>Return to spawn</span></div>
 </div></div></section>
-<section id="join" class="container"><div class="join"><span class="kicker">Ready to play?</span><h2>YOUR STORY STARTS HERE.</h2><p>Open Minecraft Java Edition, add a multiplayer server, and enter the server address.</p>
+<section id="community"><div class="container"><div class="section-top"><span class="kicker">Connected community</span><h2>Server hub</h2><p class="muted">See player stats, apply to join the team, or request a rank or reward. Requests are reviewed by staff; this website does not process payments.</p></div><div class="grid"><article class="card"><div class="emoji">📊</div><h3>Player stats</h3><p id="stats-state">Set up the bridge to show live player stats.</p><div id="player-stats"></div></article><article class="card"><div class="emoji">📋</div><h3>Staff application</h3><form id="application-form"><label>Minecraft username<input required name="player" maxlength="16" placeholder="Your username"></label><label>Discord username<input required name="discord" maxlength="80" placeholder="Your Discord username"></label><label>Role<select name="role"><option>Helper</option><option>Moderator</option><option>Builder</option><option>Developer</option></select></label><label>Why should we choose you?<textarea name="notes" required minlength="15" maxlength="1000"></textarea></label><button class="btn small" type="submit">Send application</button><p class="status" role="status"></p></form></article><article class="card"><div class="emoji">🎁</div><h3>Ranks & rewards</h3><form id="order-form"><label>Minecraft username<input required name="player" maxlength="16"></label><label>Discord username<input required name="discord" maxlength="80"></label><label>Request<select name="product"><option value="starter">Starter Rank</option><option value="champion">Champion Rank</option><option value="legend">Legend Rank</option><option value="reward">Reward Request</option></select></label><button class="btn small" type="submit">Request staff review</button><p class="status" role="status"></p></form><p class="note">No payment is taken here. Staff must verify any purchase separately before granting items.</p></article></div></div></section><section id="join" class="container"><div class="join"><span class="kicker">Ready to play?</span><h2>YOUR STORY STARTS HERE.</h2><p>Open Minecraft Java Edition, add a multiplayer server, and enter the server address.</p>
 <div class="server-ip"><strong><small>SERVER IP</small><span id="ip-text">Coming soon — server address not set</span></strong><button class="btn small secondary" id="copy-ip" disabled title="Server address will be added by the owner">Copy IP</button></div>
 <p id="copy-status" class="status" role="status" aria-live="polite"></p>
 <p class="note">The server owner can add the IP address and Discord invite in the website configuration. No address has been published here yet.</p>
@@ -76,12 +76,25 @@ footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:1
 <footer><div class="container footerrow"><div>♥ Diddyblud Lifesteal • Minecraft SMP</div><div>Independent community server. Not affiliated with Mojang or Microsoft.</div></div></footer>
 <script>
 // Owner configuration: replace empty strings with your actual server IP / Discord invitation.
-const CONFIG={serverIP:"",discordInvite:""};
+const CONFIG={serverIP:"",discordInvite:"",bridgeURL:""};
 const ip=document.getElementById('ip-text');const copy=document.getElementById('copy-ip');const status=document.getElementById('copy-status');
 if(CONFIG.serverIP.trim()){ip.textContent=CONFIG.serverIP.trim();copy.disabled=false;copy.title='Copy server IP';}
 copy.addEventListener('click',async()=>{if(!CONFIG.serverIP.trim())return;try{await navigator.clipboard.writeText(CONFIG.serverIP.trim());status.textContent='Server IP copied!';}catch(e){status.textContent='Select the server IP above to copy it manually.';}});
 const menu=document.getElementById('menu'),links=document.getElementById('navlinks');
 menu.addEventListener('click',()=>{const open=links.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
 links.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{links.classList.remove('open');menu.setAttribute('aria-expanded','false');}));
+
+// Enter the HTTPS URL of your deployed bridge above; never put a bot token or bridge secret here.
+const bridge=CONFIG.bridgeURL.trim().replace(/\\/$/,'');
+const statsState=document.getElementById('stats-state');
+const statsList=document.getElementById('player-stats');
+async function refreshStats(){
+if(!bridge)return;
+try{const response=await fetch(bridge+'/api/public/stats');if(!response.ok)throw Error('Server unavailable');const data=await response.json();statsState.textContent='Online players: '+Number(data.online||0)+(data.updatedAt?' • Updated '+new Date(data.updatedAt).toLocaleString():' • Waiting for Minecraft');
+statsList.replaceChildren();(Array.isArray(data.players)?data.players:[]).slice(0,50).forEach(p=>{const row=document.createElement('div');row.className='statrow';const name=document.createElement('span');name.textContent=p.name||'Player';const values=document.createElement('span');values.textContent='♥ '+Number(p.hearts||0)+' · 
+</body></html>+Number(p.money||0).toLocaleString();row.append(name,values);statsList.append(row);});}catch(e){statsState.textContent='Player stats temporarily unavailable.';}}
+refreshStats();
+for(const [formId,endpoint] of [['application-form','applications'],['order-form','orders']]){
+const form=document.getElementById(formId);form.addEventListener('submit',async event=>{event.preventDefault();const output=form.querySelector('.status');if(!bridge){output.textContent='The bridge is not configured yet.';return;}const btn=form.querySelector('button');btn.disabled=true;output.textContent='Submitting…';try{const data=Object.fromEntries(new FormData(form));const response=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});const result=await response.json();if(!response.ok)throw Error(result.error||'Request failed');output.textContent='Submitted! Reference: '+result.id;form.reset();}catch(e){output.textContent=e.message||'Could not submit.';}finally{btn.disabled=false;}});}
 </script>
 </body></html>
