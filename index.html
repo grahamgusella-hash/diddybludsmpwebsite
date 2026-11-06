@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0b0d13">
+<meta name="description" content="Diddyblud Lifesteal — a Minecraft Lifesteal SMP with custom hearts, economy, spawners, kits, and more.">
+<title>Diddyblud Lifesteal | Minecraft SMP</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Press+Start+2P&display=swap');
+:root{color-scheme:dark;--bg:#0b0d13;--panel:#151923;--muted:#a9b0c0;--line:#303544;--red:#fa4a5e;--gold:#ffd77b;--text:#f4f5f8}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:'Space Grotesk',sans-serif;line-height:1.6}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 75% 0%,#671d2a40,transparent 46%),radial-gradient(ellipse at 0% 70%,#29366036,transparent 54%);z-index:-1}
+a{color:inherit;text-decoration:none}button{font:inherit;cursor:pointer}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.container{width:min(1120px,calc(100% - 40px));margin:auto}.pixel{font-family:'Press Start 2P',monospace;font-weight:400;line-height:1.7}
+nav{position:sticky;top:0;z-index:10;backdrop-filter:blur(18px);background:#0b0d13db;border-bottom:1px solid #ffffff13}
+.navinner{min-height:76px;display:flex;align-items:center;gap:24px;justify-content:space-between}
+.brand{display:flex;gap:13px;align-items:center;font-size:13px}.logo{width:39px;height:39px;display:grid;place-items:center;background:#ff4c6022;border:1px solid #fa4a5e77;border-radius:10px;font-size:23px}
+.links{display:flex;gap:25px;align-items:center}.links a{font-size:14px;color:#c6cbd5}.links a:hover{color:white}.btn{background:var(--red);border:1px solid #ff7180;color:#18070a;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 22px;border-radius:10px;transition:transform .2s,filter .2s}.btn:hover{transform:translateY(-2px);filter:brightness(1.12)}.btn.secondary{color:white;background:#ffffff12;border-color:#ffffff38}.btn.small{padding:10px 16px;font-size:14px}
+.hero{padding:110px 0 100px;overflow:hidden}.hero-grid{display:grid;grid-template-columns:1.15fr .85fr;align-items:center;gap:44px}.eyebrow{display:inline-block;background:#ff4a5e14;color:#ff9eaa;border:1px solid #fa4a5e66;border-radius:100px;padding:7px 14px;font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase}
+h1{font-size:clamp(42px,6vw,78px);line-height:1.09;letter-spacing:-.065em;margin:22px 0 20px}h1 span{color:var(--red)}.lead{font-size:19px;color:var(--muted);max-width:580px}.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.hero-art{position:relative;min-height:380px;display:grid;place-items:center}.orb{width:min(350px,100%);aspect-ratio:1;border-radius:35%;background:radial-gradient(circle at 50% 45%,#ff788e50,#b0173024 50%,transparent 72%);filter:blur(15px);position:absolute}.heart{font-family:monospace;font-weight:900;font-size:clamp(155px,24vw,300px);line-height:1;color:#f44761;text-shadow:10px 10px 0 #831b35,20px 20px 0 #360c1c,0 0 90px #f4476175;transform:rotate(-7deg);z-index:1;animation:float 4s ease-in-out infinite}@keyframes float{50%{transform:translateY(-15px) rotate(-3deg)}}.orbit{position:absolute;width:330px;height:330px;border:1px dashed #ff879440;border-radius:50%}.spark{position:absolute;font-size:25px;color:var(--gold)}.s1{top:12%;left:17%}.s2{right:8%;bottom:19%}.s3{left:15%;bottom:9%}
+section{padding:70px 0}.section-top{margin-bottom:32px}.kicker{color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:.14em;font-size:12px}h2{font-size:clamp(30px,4vw,46px);letter-spacing:-.045em;line-height:1.15;margin:10px 0 12px}p.muted{color:var(--muted);max-width:700px}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.card{background:linear-gradient(160deg,#1a1e2a,#11151d);border:1px solid var(--line);border-radius:16px;padding:26px;transition:border-color .2s,transform .2s}.card:hover{border-color:#fa4a5e88;transform:translateY(-3px)}.emoji{font-size:31px}.card h3{font-size:21px;margin:16px 0 8px}.card p{color:var(--muted);margin:0;font-size:15px}
+.band{background:#121620;border-block:1px solid var(--line)}.two-col{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}.showcase{border:1px solid #913345;border-radius:18px;padding:32px;background:linear-gradient(145deg,#391826,#151924);box-shadow:0 30px 80px #0005}.showcase .pixel{font-size:14px;color:#ff8695}.showcase ul{padding-left:20px;color:#d8dce5}.showcase li{padding:5px 0}.tag{display:inline-block;border-radius:6px;border:1px solid #ffffff29;background:#ffffff0b;padding:5px 9px;font-size:12px;color:#d9e0eb;margin:4px}
+.command-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.command{background:#181c26;border:1px solid var(--line);border-radius:11px;padding:15px 18px;display:flex;gap:15px;justify-content:space-between;align-items:center}.command code{font-size:15px;font-weight:700;color:#ff8b9b;white-space:nowrap}.command span{color:#b7becc;font-size:13px;text-align:right}
+.join{background:linear-gradient(135deg,#461522,#1e1b2c 65%,#12253a);border:1px solid #a7435780;border-radius:22px;padding:50px;text-align:center}.join h2{margin-top:12px}.server-ip{margin:24px auto;max-width:540px;display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center;background:#090b12a8;padding:15px;border:1px solid #ffffff35;border-radius:12px}.server-ip strong{flex:1;min-width:200px;overflow-wrap:anywhere}.server-ip small{display:block;color:#9ba4b5;font-weight:400}
+footer{padding:35px 0;border-top:1px solid var(--line);color:#8d95a7;font-size:14px}.footerrow{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.menu-button{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:white}
+.note{color:#adb4c2;font-size:13px;margin-top:15px}.status{min-height:1.5em;color:#ffd77b;font-size:14px;margin:8px 0}
+@media(max-width:800px){.hero-grid,.two-col{grid-template-columns:1fr}.hero{padding:65px 0}.hero-art{min-height:245px;grid-row:1}.heart{font-size:180px}.orbit{width:230px;height:230px}.grid{grid-template-columns:repeat(2,1fr)}.menu-button{display:block}.links{display:none;position:absolute;top:76px;left:0;right:0;background:#11151f;border-bottom:1px solid var(--line);padding:20px;flex-direction:column;align-items:stretch}.links.open{display:flex}.links a{padding:5px}.navinner>.btn{display:none}}
+@media(max-width:560px){.grid,.command-grid{grid-template-columns:1fr}.container{width:min(100% - 28px,1120px)}.hero-art{min-height:210px}.hero{padding-top:38px}.heart{font-size:150px}.join{padding:30px 18px}section{padding:50px 0}.server-ip strong{min-width:0}.command{align-items:flex-start;flex-direction:column;gap:3px}.command span{text-align:left}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<nav><div class="container navinner">
+<a class="brand" href="#home" aria-label="Diddyblud Lifesteal home"><span class="logo">♥</span><span class="pixel">DIDDYBLUD<br>LIFESTEAL</span></a>
+<button class="menu-button" id="menu" aria-label="Toggle menu" aria-expanded="false" aria-controls="navlinks">☰ Menu</button>
+<div class="links" id="navlinks"><a href="#features">Features</a><a href="#lifesteal">Lifesteal</a><a href="#commands">Commands</a><a href="#join">How to Join</a></div>
+<a class="btn small" href="#join">Play Now ↗</a>
+</div></nav>
+<main>
+<header class="hero" id="home"><div class="container hero-grid">
+<div><div class="eyebrow">Minecraft • Survival • Lifesteal</div><h1>STEAL HEARTS.<br><span>RULE THE SMP.</span></h1><p class="lead">Build your empire, fight for your hearts, and become the richest player on Diddyblud Lifesteal. Every fight matters.</p><div class="actions"><a class="btn" href="#join">♥ Join the Server</a><a class="btn secondary" href="#features">Explore Features ↓</a></div></div>
+<div class="hero-art" aria-label="Large red Lifesteal heart illustration" role="img"><div class="orb"></div><div class="orbit"></div><div class="heart">♥</div><span class="spark s1">✦</span><span class="spark s2">✧</span><span class="spark s3">✦</span></div>
+</div></header>
+<section id="features"><div class="container"><div class="section-top"><span class="kicker">The experience</span><h2>More than ordinary survival.</h2><p class="muted">Level up your adventure with custom systems built around PvP, trading, building, and progression.</p></div>
+<div class="grid">
+<article class="card"><div class="emoji">❤️</div><h3>Lifesteal Hearts</h3><p>Fight for extra hearts, withdraw them, and trade with other players. Protect your last heart.</p></article>
+<article class="card"><div class="emoji">💰</div><h3>Money & Shards</h3><p>Earn currency, use physical money bills, and collect shards for special rewards.</p></article>
+<article class="card"><div class="emoji">🛒</div><h3>Custom Shop</h3><p>Browse shop categories, buy and sell items, and explore the special shard shop.</p></article>
+<article class="card"><div class="emoji">🔥</div><h3>Stackable Spawners</h3><p>Upgrade your farms using stackable spawners that generate resources into storage.</p></article>
+<article class="card"><div class="emoji">⚒️</div><h3>Powerful Items</h3><p>Discover custom tools including the 3×3 pickaxe, infinite rocket, and water bucket.</p></article>
+<article class="card"><div class="emoji">🏆</div><h3>Ranks & Kits</h3><p>Show off your rank, unlock kits, and compete for a place on the leaderboards.</p></article>
+<article class="card"><div class="emoji">🏠</div><h3>Homes & Teleports</h3><p>Set homes, request teleports, and use random teleport to explore fresh terrain.</p></article>
+<article class="card"><div class="emoji">📦</div><h3>Vaults & Auctions</h3><p>Store valuable items in player vaults and trade with the community.</p></article>
+<article class="card"><div class="emoji">🌲</div><h3>Veinminer & Tree Feller</h3><p>Mine ore veins and fell trees faster, leaving more time for adventures.</p></article>
+</div></div></section>
+<section class="band" id="lifesteal"><div class="container two-col"><div><span class="kicker">The heart of the server</span><h2>Risk it all for one more heart.</h2><p class="muted">On a Lifesteal SMP, hearts aren't just health — they're power. Win PvP encounters to increase your advantage, and think carefully before challenging another player.</p><p class="muted">Your hearts can be withdrawn and exchanged. Run out of hearts, and you're out of the fight.</p><a href="#join" class="btn secondary">Start your journey ↗</a></div><div class="showcase"><div class="pixel">♥ LIFESTEAL</div><ul><li>Gain hearts through PvP</li><li>Withdraw and trade hearts</li><li>Custom heart items</li><li>Lose your final heart and face a ban</li></ul><div><span class="tag">PVP</span><span class="tag">SURVIVAL</span><span class="tag">HEARTS</span></div></div></div></section>
+<section id="commands"><div class="container"><div class="section-top"><span class="kicker">Get started</span><h2>Useful player commands.</h2><p class="muted">Get around, manage your resources, and discover what the server offers.</p></div>
+<div class="command-grid">
+<div class="command"><code>/shop</code><span>Open the server shop</span></div>
+<div class="command"><code>/sethome</code><span>Save your home location</span></div>
+<div class="command"><code>/tpa</code><span>Request a teleport</span></div>
+<div class="command"><code>/rtp</code><span>Random teleport menu</span></div>
+<div class="command"><code>/sell</code><span>Sell your items</span></div>
+<div class="command"><code>/money withdraw</code><span>Withdraw physical money</span></div>
+<div class="command"><code>/sidebar</code><span>Toggle your scoreboard</span></div>
+<div class="command"><code>/spawn</code><span>Return to spawn</span></div>
+</div></div></section>
+<section id="join" class="container"><div class="join"><span class="kicker">Ready to play?</span><h2>YOUR STORY STARTS HERE.</h2><p>Open Minecraft Java Edition, add a multiplayer server, and enter the server address.</p>
+<div class="server-ip"><strong><small>SERVER IP</small><span id="ip-text">Coming soon — server address not set</span></strong><button class="btn small secondary" id="copy-ip" disabled title="Server address will be added by the owner">Copy IP</button></div>
+<p id="copy-status" class="status" role="status" aria-live="polite"></p>
+<p class="note">The server owner can add the IP address and Discord invite in the website configuration. No address has been published here yet.</p>
+</div></section>
+</main>
+<footer><div class="container footerrow"><div>♥ Diddyblud Lifesteal • Minecraft SMP</div><div>Independent community server. Not affiliated with Mojang or Microsoft.</div></div></footer>
+<script>
+// Owner configuration: replace empty strings with your actual server IP / Discord invitation.
+const CONFIG={serverIP:"",discordInvite:""};
+const ip=document.getElementById('ip-text');const copy=document.getElementById('copy-ip');const status=document.getElementById('copy-status');
+if(CONFIG.serverIP.trim()){ip.textContent=CONFIG.serverIP.trim();copy.disabled=false;copy.title='Copy server IP';}
+copy.addEventListener('click',async()=>{if(!CONFIG.serverIP.trim())return;try{await navigator.clipboard.writeText(CONFIG.serverIP.trim());status.textContent='Server IP copied!';}catch(e){status.textContent='Select the server IP above to copy it manually.';}});
+const menu=document.getElementById('menu'),links=document.getElementById('navlinks');
+menu.addEventListener('click',()=>{const open=links.classList.toggle('open');menu.setAttribute('aria-expanded',String(open));});
+links.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{links.classList.remove('open');menu.setAttribute('aria-expanded','false');}));
+</script>
+</body></html>
