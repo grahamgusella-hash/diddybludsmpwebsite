@@ -115,4 +115,4 @@ async function load(){
 }
 document.getElementById('refresh').addEventListener('click',load);
 load();
-setInterval(()=>{if(!document.hidden&&!reviews.hidden)load();},12000);
+setInterval(()=>{if(!document.hidden&&!reviews.hidden&&!document.querySelector('.interview textarea:focus'))load();},12000);
