@@ -9,12 +9,14 @@ const secret=env('BRIDGE_SECRET');
 const token=env('DISCORD_TOKEN');
 if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
 const dataFile=env('DATA_FILE','./bridge-data.json');
-let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]},applicationRoles:[]};
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]},applicationRoles:[],tickets:[]};
 try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
+if(!Array.isArray(db.tickets))db.tickets=[];
 const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
 const chatId=env('DISCORD_CHAT_CHANNEL_ID'),announcementId=env('DISCORD_ANNOUNCEMENTS_CHANNEL_ID');
 const appId=env('DISCORD_APPLICATIONS_CHANNEL_ID'),ordersId=env('DISCORD_ORDERS_CHANNEL_ID');
+const ticketsChannelId=env('DISCORD_TICKETS_CHANNEL_ID');
 const staffRole=env('DISCORD_STAFF_ROLE_ID');
 const bridgeUrl=env('PUBLIC_BRIDGE_URL','https://diddybludsmpwebsite.onrender.com');
 const discordClientSecret=env('DISCORD_CLIENT_SECRET');
@@ -79,6 +81,16 @@ const codeHash=value=>crypto.createHash('sha256').update(String(value),'utf8').d
 const findApplication=id=>db.applications.find(a=>a.id===id);
 const canInterview=(app,code)=>{if(!app?.interview||app.interview.status!=='open'||typeof code!=='string'||!/^[0-9a-f]{32}$/.test(code))return false;const hash=codeHash(code),stored=app.interview.codeHash;return typeof stored==='string'&&hash.length===stored.length&&crypto.timingSafeEqual(Buffer.from(hash),Buffer.from(stored));};
 const interviewSummary=app=>({id:app.id,player:app.player,role:app.role,applicationStatus:app.status||'pending',interviewStatus:app.interview?.status||'not_started',messages:app.interview?.messages||[]});
+const ticketById=id=>db.tickets.find(t=>t.id===id);
+const validTicketCode=(ticket,code)=>{
+ if(!ticket||typeof code!=='string'||!(/^[0-9a-f]{48}$/.test(code))||!ticket.codeHash)return false;
+ const calculated=codeHash(code);
+ return calculated.length===ticket.codeHash.length&&crypto.timingSafeEqual(Buffer.from(calculated),Buffer.from(ticket.codeHash));
+};
+const ticketView=t=>({id:t.id,player:t.player,subject:t.subject,category:t.category,status:t.status,createdAt:t.createdAt,updatedAt:t.updatedAt,messages:t.messages||[]});
+const ticketCategories=new Set(['General Support','Bug Report','Player Report','Appeal','Shop / Rank Help','Other']);
+const ticketsIpLimit=new Map();
+const ticketRate=(ip,limit=12)=>{const now=Date.now(),prior=(ticketsIpLimit.get(ip)||[]).filter(x=>now-x<3600000);if(prior.length>=limit)return true;prior.push(now);ticketsIpLimit.set(ip,prior);if(ticketsIpLimit.size>10000)ticketsIpLimit.clear();return false;};
 const validPlayer=(s)=>/^[A-Za-z0-9_]{3,16}$/.test(s);
 const VALID_PRODUCTS={starter:'Starter Rank',champion:'Champion Rank',legend:'Legend Rank',reward:'Reward Request'};
 const commands=[
@@ -111,6 +123,14 @@ const server=http.createServer(async(req,res)=>{
 const origin=req.headers.origin;
 const url=new URL(req.url,'http://localhost');
 
+if(req.method==='GET'&&url.pathname==='/tickets'){
+ res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"});
+ res.end(fs.readFileSync(new URL('./tickets.html',import.meta.url),'utf8'));return;
+}
+if(req.method==='GET'&&url.pathname==='/tickets.js'){
+ res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+ res.end(fs.readFileSync(new URL('./tickets.js',import.meta.url),'utf8'));return;
+}
 if(req.method==='GET'&&url.pathname==='/staff'){
  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"});
  res.end(fs.readFileSync(new URL('./staff.html',import.meta.url),'utf8'));return;
@@ -161,6 +181,34 @@ if(url.pathname.startsWith('/api/staff/')){
  if(!staff){staffReply(res,401,{error:'Log in with a Discord staff or administrator account.'});return;}
  if(req.method==='GET'&&url.pathname==='/api/staff/applications'){
   staffReply(res,200,{reviewer:staff.name,applications:db.applications.slice(-500).reverse()});return;
+ }
+ if(req.method==='GET'&&url.pathname==='/api/staff/tickets'){
+  staffReply(res,200,{tickets:db.tickets.slice(-500).reverse().map(ticketView)});return;
+ }
+ if(req.method==='POST'&&url.pathname==='/api/staff/ticket'){
+  if(req.headers.origin!==bridgeUrl){staffReply(res,403,{error:'Invalid origin.'});return;}
+  try{
+   const input=await body(req),ticket=ticketById(clean(input.id,12)),action=clean(input.action,12);
+   if(!ticket){staffReply(res,404,{error:'Ticket not found.'});return;}
+   if(action==='reply'){
+    if(ticket.status==='closed'){staffReply(res,409,{error:'Ticket is closed. Reopen it first.'});return;}
+    const message=safeText(input.message,1500);
+    if(!message){staffReply(res,400,{error:'Write a reply.'});return;}
+    ticket.messages.push({from:'staff',name:staff.name,text:message,at:new Date().toISOString()});
+    ticket.messages=ticket.messages.slice(-150);
+    ticket.status='answered';
+   }else if(action==='close'){
+    if(ticket.status==='closed'){staffReply(res,409,{error:'Already closed.'});return;}
+    ticket.status='closed';
+   }else if(action==='reopen'){
+    if(ticket.status!=='closed'){staffReply(res,409,{error:'Ticket is already open.'});return;}
+    ticket.status='open';
+   }else{staffReply(res,400,{error:'Unknown action.'});return;}
+   ticket.updatedAt=new Date().toISOString();
+   ticket.lastStaff=staff.id;
+   save();
+   staffReply(res,200,{ok:true,ticket:ticketView(ticket)});return;
+  }catch(e){staffReply(res,400,{error:'Invalid ticket request.'});return;}
  }
  if(req.method==='POST'&&url.pathname==='/api/staff/interview'){
   if(req.headers.origin!==bridgeUrl){staffReply(res,403,{error:'Invalid origin.'});return;}
@@ -257,6 +305,39 @@ if(ackIds.size)db.queue=db.queue.filter(command=>!ackIds.has(command.id));
 const queue=db.queue.slice(0,30);save();reply(res,200,{commands:queue},origin);
 }catch(e){reply(res,400,{error:'Invalid sync: '+e.message},origin);}return;}
 reply(res,404,{error:'Not found'},origin);return;
+}
+if(req.method==='POST'&&url.pathname==='/api/tickets/create'){
+ if(req.headers.origin!==bridgeUrl){staffReply(res,403,{error:'Use the tickets website to submit requests.'});return;}
+ const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0].trim();
+ if(ticketRate(ip,4)){staffReply(res,429,{error:'Too many new tickets. Please try later.'});return;}
+ try{
+  const input=await body(req),player=clean(input.player,16),discord=clean(input.discord,80),subject=safeText(input.subject,100),category=clean(input.category,30),message=safeText(input.message,1500);
+  if(!validPlayer(player)||discord.length<2||!ticketCategories.has(category)||subject.length<5||message.length<10){staffReply(res,400,{error:'Enter a valid player name, Discord name, subject, category and message.'});return;}
+  const id=crypto.randomBytes(6).toString('hex');
+  const code=crypto.randomBytes(24).toString('hex');
+  const now=new Date().toISOString();
+  const ticket={id,codeHash:codeHash(code),player,discord,category,subject,status:'open',createdAt:now,updatedAt:now,messages:[{from:'player',name:player,text:message,at:now}]};
+  db.tickets.push(ticket);db.tickets=db.tickets.slice(-500);save();
+  await send(ticketsChannelId,'🎫 New support ticket #'+id+' from '+safeText(player,16)+' · '+safeText(category,30)+' · '+subject+'\\nStaff: '+bridgeUrl+'/staff');
+  staffReply(res,201,{ok:true,id,code,ticket:ticketView(ticket)});return;
+ }catch(e){staffReply(res,400,{error:'Invalid ticket form.'});return;}
+}
+if(req.method==='POST'&&(url.pathname==='/api/tickets/access'||url.pathname==='/api/tickets/reply')){
+ if(req.headers.origin!==bridgeUrl){staffReply(res,403,{error:'Invalid origin.'});return;}
+ const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0].trim();
+ if(ticketRate(ip,90)){staffReply(res,429,{error:'Too many requests. Try again later.'});return;}
+ try{
+  const input=await body(req),id=clean(input.id,12),code=String(input.code||''),ticket=ticketById(id);
+  if(!validTicketCode(ticket,code)){staffReply(res,403,{error:'Ticket ID or access code is incorrect.'});return;}
+  if(url.pathname==='/api/tickets/reply'){
+   if(ticket.status==='closed'){staffReply(res,409,{error:'This ticket is closed. Ask staff to reopen it.'});return;}
+   const message=safeText(input.message,1500);
+   if(!message){staffReply(res,400,{error:'Enter a reply.'});return;}
+   ticket.messages.push({from:'player',name:ticket.player,text:message,at:new Date().toISOString()});
+   ticket.messages=ticket.messages.slice(-150);ticket.status='open';ticket.updatedAt=new Date().toISOString();save();
+  }
+  staffReply(res,200,{ticket:ticketView(ticket)});return;
+ }catch{staffReply(res,400,{error:'Invalid ticket request.'});return;}
 }
 if(req.method==='POST'&&(url.pathname==='/api/interview/access'||url.pathname==='/api/interview/message')){
  const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(',')[0].trim();
