@@ -131,7 +131,7 @@ if(req.method==='GET'&&url.pathname==='/auth/callback'){
   const profile=await fetch('https://discord.com/api/v10/users/@me',{headers:{Authorization:'Bearer '+tokenData.access_token}});
   if(!profile.ok)throw Error('Profile lookup failed');
   const user=await profile.json();
-  if(!/^\\d{17,22}$/.test(String(user.id))||!await authorizedStaff(user.id)){redirect(res,'/staff?error=not_staff',[clear]);return;}
+  if(!/^\d{17,22}$/.test(String(user.id))||!await authorizedStaff(user.id)){redirect(res,'/staff?error=not_staff',[clear]);return;}
   const session=crypto.randomBytes(32).toString('hex');
   sessions.set(session,{id:user.id,name:clean(user.global_name||user.username,80),expires:Date.now()+8*60*60*1000});
   redirect(res,'/staff',[clear,makeCookie('diddyblud_session',session,8*60*60)]);return;
