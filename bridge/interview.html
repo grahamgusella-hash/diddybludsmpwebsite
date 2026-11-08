@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diddyblud Lifesteal | Interview</title><style>
+:root{color-scheme:dark;font-family:system-ui,Arial,sans-serif;background:#0c1019;color:#f4f6fb}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top right,#62253b66,transparent 60%),#0c1019}
+main{width:min(750px,calc(100% - 32px));margin:40px auto}h1{font-size:clamp(28px,5vw,42px)}p{color:#c4cddd;line-height:1.6}
+.panel{border:1px solid #3c455b;background:#171d29;padding:24px;border-radius:15px;margin-top:20px}
+label{display:grid;gap:7px;margin:13px 0;font-weight:600}input,textarea{border:1px solid #55617a;background:#0c111c;color:white;padding:12px;border-radius:9px;font:inherit;width:100%}
+textarea{min-height:95px;resize:vertical}button{padding:12px 18px;background:#f24763;border:1px solid #fd6f86;border-radius:9px;color:#18080e;font:700 14px system-ui;cursor:pointer}button:disabled{opacity:.5}
+a{color:#ff9caf}.message{padding:12px;border-radius:10px;background:#101624;border:1px solid #333e55;margin:10px 0;white-space:pre-wrap;overflow-wrap:anywhere}.message strong{color:#ffb4c2}
+#messages{max-height:400px;overflow:auto}#notice{min-height:25px;color:#ffd089}[hidden]{display:none!important}
+</style></head>
+<body><main><a href="https://grahamgusella-hash.github.io/diddybludsmpwebsite/">← Diddyblud Lifesteal</a>
+<h1>Applicant Interview</h1><p>Talk privately with the Diddyblud Lifesteal staff team about your application. Ask a staff member for your application ID and private interview code. Never post the code publicly.</p>
+<section class="panel" id="access"><h2>Join your interview</h2><form id="access-form"><label>Application ID<input name="id" maxlength="8" minlength="8" required autocomplete="off"></label><label>Private interview code<input name="code" maxlength="32" minlength="32" required autocomplete="off"></label><button type="submit">Join Interview</button></form></section>
+<section class="panel" id="room" hidden><h2 id="room-title">Interview</h2><p id="room-status"></p><div id="messages" role="log" aria-live="polite"></div><form id="message-form"><label>Your reply<textarea name="message" maxlength="1200" required placeholder="Answer your interviewer's question…"></textarea></label><button type="submit">Send Reply</button></form><button id="leave" type="button">Leave interview</button></section>
+<p id="notice" role="status"></p>
+</main><script src="/interview.js" defer></script></body></html>
