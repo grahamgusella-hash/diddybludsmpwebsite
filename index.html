@@ -101,7 +101,7 @@ async function loadLevelShop(){
     document.getElementById('level-submit').disabled=true;
     return;
   }
-  rates.textContent='Earn 1 level per '+Number(shop.playtimeMinutes)+' minutes played, or exchange $'+Number(shop.moneyPerLevel).toLocaleString()+' in-game for 1 level. All rank and reward purchases happen here on the website.';
+  rates.textContent='Earn '+Number(shop.levelsPerInterval||50)+' levels every '+Number(shop.playtimeMinutes)+' minutes played, or exchange '+String.fromCharCode(36)+Number(shop.moneyPerLevel).toLocaleString()+' in-game for 1 level. All rank and reward purchases happen here on the website.';
   const board=document.getElementById('level-offers'),select=document.getElementById('level-offer');
   const selected=select.value;
   board.replaceChildren();
