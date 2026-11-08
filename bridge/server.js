@@ -16,6 +16,25 @@ const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.Gui
 const chatId=env('DISCORD_CHAT_CHANNEL_ID'),announcementId=env('DISCORD_ANNOUNCEMENTS_CHANNEL_ID');
 const appId=env('DISCORD_APPLICATIONS_CHANNEL_ID'),ordersId=env('DISCORD_ORDERS_CHANNEL_ID');
 const staffRole=env('DISCORD_STAFF_ROLE_ID');
+const bridgeUrl=env('PUBLIC_BRIDGE_URL','https://diddybludsmpwebsite.onrender.com');
+const discordClientSecret=env('DISCORD_CLIENT_SECRET');
+const guildId=env('DISCORD_GUILD_ID');
+const sessions=new Map();
+const cookies=req=>Object.fromEntries(String(req.headers.cookie||'').split(';').map(x=>{const i=x.indexOf('=');return i<0?['','']:[x.slice(0,i).trim(),x.slice(i+1).trim()]}).filter(x=>x[0]));
+const makeCookie=(key,value,age)=>key+'='+value+'; Path=/; Max-Age='+age+'; Secure; HttpOnly; SameSite=Lax';
+const staffReply=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(JSON.stringify(data));};
+const redirect=(res,location,set=[])=>{res.writeHead(302,{Location:location,'Cache-Control':'no-store','Referrer-Policy':'no-referrer',...(set.length?{'Set-Cookie':set}:{})});res.end();};
+async function authorizedStaff(id){
+ if(!client.isReady()||!guildId)return false;
+ try{const guild=await client.guilds.fetch(guildId);const member=await guild.members.fetch({user:id,force:true});return guild.ownerId===id||member.permissions.has(PermissionFlagsBits.Administrator)||Boolean(staffRole&&member.roles.cache.has(staffRole));}
+ catch{return false;}
+}
+async function staffSession(req){
+ const key=cookies(req).diddyblud_session,obj=key&&sessions.get(key);
+ if(!obj||obj.expires<Date.now()){if(key)sessions.delete(key);return null;}
+ return await authorizedStaff(obj.id)?obj:null;
+}
+
 const allowedOrigin=env('SITE_ORIGIN','https://grahamgusella-hash.github.io');
 const siteOrigins=new Set(['https://grahamgusella-hash.github.io',allowedOrigin]);
 const corsOrigin=origin=>siteOrigins.has(origin)?origin:'null';
@@ -84,6 +103,66 @@ client.login(token).catch(e=>console.error('Discord login failed:',e.message));
 const server=http.createServer(async(req,res)=>{
 const origin=req.headers.origin;
 const url=new URL(req.url,'http://localhost');
+
+if(req.method==='GET'&&url.pathname==='/staff'){
+ res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"});
+ res.end(fs.readFileSync(new URL('./staff.html',import.meta.url),'utf8'));return;
+}
+if(req.method==='GET'&&url.pathname==='/staff.js'){
+ res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+ res.end(fs.readFileSync(new URL('./staff.js',import.meta.url),'utf8'));return;
+}
+if(req.method==='GET'&&url.pathname==='/auth/discord'){
+ if(!discordClientSecret||!guildId||!client.user){staffReply(res,503,{error:'Configure DISCORD_CLIENT_SECRET and DISCORD_GUILD_ID on Render.'});return;}
+ const state=crypto.randomBytes(32).toString('hex');
+ const auth=new URL('https://discord.com/oauth2/authorize');
+ for(const [k,v] of Object.entries({client_id:client.user.id,redirect_uri:bridgeUrl+'/auth/callback',response_type:'code',scope:'identify',state}))auth.searchParams.set(k,v);
+ redirect(res,auth.toString(),[makeCookie('diddyblud_state',state,600)]);return;
+}
+if(req.method==='GET'&&url.pathname==='/auth/callback'){
+ const state=url.searchParams.get('state')||'',code=url.searchParams.get('code')||'',expected=cookies(req).diddyblud_state;
+ const clear=makeCookie('diddyblud_state','',0);
+ if(!expected||expected.length!==state.length||!crypto.timingSafeEqual(Buffer.from(expected),Buffer.from(state))||!code){redirect(res,'/staff?error=invalid_login',[clear]);return;}
+ try{
+  const form=new URLSearchParams({client_id:client.user.id,client_secret:discordClientSecret,grant_type:'authorization_code',code,redirect_uri:bridgeUrl+'/auth/callback'});
+  const tokenResponse=await fetch('https://discord.com/api/v10/oauth2/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form});
+  if(!tokenResponse.ok)throw Error('OAuth exchange failed');
+  const tokenData=await tokenResponse.json();
+  const profile=await fetch('https://discord.com/api/v10/users/@me',{headers:{Authorization:'Bearer '+tokenData.access_token}});
+  if(!profile.ok)throw Error('Profile lookup failed');
+  const user=await profile.json();
+  if(!/^\\d{17,22}$/.test(String(user.id))||!await authorizedStaff(user.id)){redirect(res,'/staff?error=not_staff',[clear]);return;}
+  const session=crypto.randomBytes(32).toString('hex');
+  sessions.set(session,{id:user.id,name:clean(user.global_name||user.username,80),expires:Date.now()+8*60*60*1000});
+  redirect(res,'/staff',[clear,makeCookie('diddyblud_session',session,8*60*60)]);return;
+ }catch(e){console.warn('Staff login failed:',e.message);redirect(res,'/staff?error=login_failed',[clear]);return;}
+}
+if(req.method==='POST'&&url.pathname==='/auth/logout'){
+ const key=cookies(req).diddyblud_session;if(key)sessions.delete(key);
+ redirect(res,'/staff',[makeCookie('diddyblud_session','',0)]);return;
+}
+if(url.pathname.startsWith('/api/staff/')){
+ const staff=await staffSession(req);
+ if(!staff){staffReply(res,401,{error:'Log in with a Discord staff or administrator account.'});return;}
+ if(req.method==='GET'&&url.pathname==='/api/staff/applications'){
+  staffReply(res,200,{reviewer:staff.name,applications:db.applications.slice(-500).reverse()});return;
+ }
+ if(req.method==='POST'&&url.pathname==='/api/staff/review'){
+  if(req.headers.origin!==bridgeUrl){staffReply(res,403,{error:'Invalid request origin.'});return;}
+  try{
+   const input=await body(req),id=clean(input.id,8),decision=clean(input.decision,10);
+   if(!['accepted','denied'].includes(decision)){staffReply(res,400,{error:'Invalid decision.'});return;}
+   const application=db.applications.find(x=>x.id===id);
+   if(!application){staffReply(res,404,{error:'Application not found.'});return;}
+   if(application.status&&application.status!=='pending'){staffReply(res,409,{error:'Already reviewed.'});return;}
+   application.status=decision;application.reviewedBy=staff.id;application.reviewedAt=new Date().toISOString();save();
+   await send(appId,(decision==='accepted'?'✅':'❌')+' Application #'+id+' '+decision+' by '+safeText(staff.name,60)+' — '+safeText(application.player,16)+' for '+safeText(application.role,40));
+   staffReply(res,200,{ok:true,status:decision,id});return;
+  }catch{staffReply(res,400,{error:'Invalid review request.'});return;}
+ }
+ staffReply(res,404,{error:'Unknown staff route.'});return;
+}
+
 if(req.method==='OPTIONS'){
   if(url.pathname.startsWith('/api/public/')){publicWriteReply(res,204,{});return;}
   reply(res,204,{},origin);return;
@@ -150,7 +229,7 @@ const ip=String(req.headers['x-forwarded-for']||req.socket.remoteAddress).split(
 try{const v=await body(req);const player=clean(v.player,16),discord=clean(v.discord,80),notes=safeText(v.notes,1000);
 if(!validPlayer(player)||discord.length<2||discord.length>80){publicWriteReply(res,400,{error:'Enter a valid Minecraft username and Discord username.'});return;}
 const id=crypto.randomUUID().slice(0,8);
-if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){publicWriteReply(res,400,{error:'Choose a role and write at least 15 characters.'});return;}db.applications.push({id,player,discord,role,notes,createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);publicWriteReply(res,201,{ok:true,id});return;}
+if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){publicWriteReply(res,400,{error:'Choose a role and write at least 15 characters.'});return;}db.applications.push({id,player,discord,role,notes,status:'pending',createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);publicWriteReply(res,201,{ok:true,id});return;}
 const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){publicWriteReply(res,400,{error:'Invalid request type'});return;}
 db.orders.push({id,player,discord,product,status:'pending',createdAt:new Date().toISOString()});db.orders=db.orders.slice(-500);save();
 await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must verify eligibility before /approveorder.');
