@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diddyblud Lifesteal | Support Tickets</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,Arial,sans-serif;background:#0c0f18;color:#f5f6fb}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top right,#67233660,transparent 65%),#0b0f17}
+main{max-width:900px;margin:40px auto;padding:0 18px}a{color:#ffa1b1}
+h1{font-size:clamp(30px,5vw,46px)}p{color:#c4ccdb;line-height:1.6}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:18px}
+.panel{padding:24px;background:#171d2a;border:1px solid #3c465c;border-radius:16px;margin:12px 0}
+label{display:grid;gap:6px;margin:12px 0}input,textarea,select{width:100%;padding:12px;background:#0d121d;border:1px solid #4d5a73;color:#fff;border-radius:9px;font:inherit}
+textarea{min-height:110px;resize:vertical}
+button{border:1px solid #f76a83;border-radius:9px;background:#f44864;color:#1f090f;padding:12px 18px;font:700 14px system-ui;cursor:pointer}
+button:disabled{opacity:.5;cursor:not-allowed}
+button.secondary{background:#252d3d;border-color:#53617c;color:white}
+.message{background:#111725;border:1px solid #344059;border-radius:10px;margin:12px 0;padding:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.message strong{color:#ffacbc}
+#conversation{max-height:450px;overflow-y:auto}
+#notice{color:#ffd18a;min-height:24px}#receipt{border:1px solid #8b6540;background:#292116;padding:18px;border-radius:12px;overflow-wrap:anywhere}
+.secret{font-weight:700;color:#ffe0a1;word-break:break-all}
+[hidden]{display:none!important}
+</style></head><body><main>
+<a href="https://grahamgusella-hash.github.io/diddybludsmpwebsite/">← Diddyblud Lifesteal</a>
+<h1>Support Tickets</h1><p>Need help with a player report, bug, purchase, appeal, or question? Create a private ticket and reply to the staff team here. Keep your ticket access code private.</p>
+<div class="panels">
+<section class="panel"><h2>Create a ticket</h2><form id="create">
+<label>Minecraft username<input name="player" pattern="[A-Za-z0-9_]{3,16}" maxlength="16" required></label>
+<label>Discord username<input name="discord" maxlength="80" required></label>
+<label>Category<select name="category" required><option>General Support</option><option>Bug Report</option><option>Player Report</option><option>Appeal</option><option>Shop / Rank Help</option><option>Other</option></select></label>
+<label>Subject<input name="subject" minlength="5" maxlength="100" required></label>
+<label>Describe your issue<textarea name="message" minlength="10" maxlength="1500" required></textarea></label>
+<button type="submit">Create Ticket</button></form>
+</section>
+<section class="panel"><h2>Open an existing ticket</h2><p>Use the ticket ID and private access code given when you created it.</p>
+<form id="access"><label>Ticket ID<input name="id" minlength="12" maxlength="12" required autocomplete="off"></label>
+<label>Private access code<input name="code" minlength="48" maxlength="48" required autocomplete="off"></label>
+<button type="submit">Open Ticket</button></form></section>
+</div>
+<section id="receipt" hidden><h2>Save these details</h2><p>Your private code is shown only now. Save it somewhere safe so you can return to this ticket.</p><p>Ticket ID: <span class="secret" id="new-id"></span></p><p>Access code: <span class="secret" id="new-code"></span></p><button id="copy" type="button">Copy Ticket Details</button></section>
+<section id="room" class="panel" hidden>
+<h2 id="ticket-heading">Ticket</h2><p id="ticket-state"></p>
+<div id="conversation" role="log" aria-label="Ticket messages"></div>
+<form id="reply"><label>Your reply<textarea name="message" maxlength="1500" required></textarea></label><button type="submit">Send Reply</button></form>
+<button class="secondary" id="leave" type="button">Leave Ticket</button>
+</section><p id="notice" role="status" aria-live="polite"></p>
+</main><script src="/tickets.js" defer></script></body></html>
