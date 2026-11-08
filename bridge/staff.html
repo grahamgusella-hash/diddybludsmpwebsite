@@ -14,12 +14,12 @@ button:disabled{opacity:.45;cursor:default}
 article{padding:20px;background:#161b27;border:1px solid #394155;border-radius:14px;overflow-wrap:anywhere}
 article p{margin:7px 0;color:#c7d0df}article h3{margin:0 0 10px}article .answers{white-space:pre-wrap;overflow-wrap:anywhere;background:#0e121c;padding:12px;border-radius:8px;color:#dde4f0}
 .actions{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}.tag{font-size:12px;border:1px solid #646f85;border-radius:16px;padding:3px 9px;display:inline-block}
-#notice{min-height:25px}#app-list:empty::after{content:'No applications to display.';color:#aeb6c7}
+#notice{min-height:25px}.interview{margin-top:16px;border-top:1px solid #41475a;padding-top:14px}.chatlog{max-height:260px;overflow:auto;padding:10px;border-radius:8px;background:#0c111b;margin:10px 0}.chatline{border-bottom:1px solid #30394b;padding:6px 0;white-space:pre-wrap;overflow-wrap:anywhere}.chatline strong{color:#ff9bab}.interview textarea{width:100%;min-height:85px;background:#0b101a;color:white;border:1px solid #566079;border-radius:8px;padding:10px;font:inherit}.secret{word-break:break-all;color:#ffd487;font-weight:700}#app-list:empty::after{content:'No applications to display.';color:#aeb6c7}
 [hidden]{display:none!important}
 </style></head>
 <body><main><header><a href="https://grahamgusella-hash.github.io/diddybludsmpwebsite/">← Back to Diddyblud Lifesteal</a><form action="/auth/logout" method="post"><button class="secondary" id="logout" hidden>Sign out</button></form></header>
 <h1>Staff Application Reviews</h1>
-<p>Authorized Discord server staff can review and accept or deny applications. Decisions are recorded and reported in Discord. Accepting an application does not automatically grant administrator permissions or in-game ranks.</p>
+<p>Authorized Discord server staff can review and accept or deny applications. Decisions are recorded and reported in Discord. Start a private interview, exchange questions and answers with the applicant, then accept or deny the application. Accepting does not automatically grant administrator permissions or in-game ranks.</p>
 <div id="login" class="panel"><h2>Sign in with Discord</h2><p>Only Discord administrators or members of the configured staff role can review applications.</p><a class="button" href="/auth/discord">Sign in with Discord</a></div>
 <div id="review" hidden><p id="reviewer"></p><button id="refresh" class="secondary">Refresh applications</button><p id="notice" role="status"></p><div id="app-list" class="cards"></div></div>
 </main><script src="/staff.js" defer></script></body></html>
