@@ -18,6 +18,20 @@ https://diddybludsmpwebsite.onrender.com/staff
 6. Set `PUBLIC_BRIDGE_URL=https://diddybludsmpwebsite.onrender.com` (exact HTTPS origin without trailing slash); then deploy/redeploy Render.
 7. Visit https://diddybludsmpwebsite.onrender.com/staff and click **Sign in with Discord**.
 
+## Private applicant interviews
+
+The website now includes a **Join Interview** link to:
+https://diddybludsmpwebsite.onrender.com/interview
+
+1. An applicant submits a role application and keeps their **application ID**.
+2. Authorized staff sign in at https://diddybludsmpwebsite.onrender.com/staff.
+3. Find the application and click **Start private interview**. The site generates a unique 32-character invite code and displays it to staff once.
+4. Staff privately send the applicant the application ID, the code, and the interview URL (for example, using a Discord direct message). Do not post codes in public channels.
+5. The applicant enters their ID and code. Staff and the applicant exchange text questions and answers on the website. Messages refresh about every 10–12 seconds.
+6. Staff can **End interview**, **Accept**, or **Deny** the application. Accept/deny closes any active interview and does not automatically assign a privileged rank.
+
+Interview codes are held only as SHA-256 hashes in the backend data file; the generated plaintext code is returned only once to the staff member starting the interview. Starting a new interview invalidates the previous code and clears the previous interview's conversation. The data shares the bridge's existing JSON-file persistence limitations; for reliable long-term storage, use a database or persistent disk. This is text interview messaging, not voice/video calls.
+
 ## Staff review behavior
 - New applications are forwarded to the configured Discord applications channel, then appear in the dashboard.
 - Accept and Deny require authenticated Discord staff or administrator membership and a valid same-origin request.
