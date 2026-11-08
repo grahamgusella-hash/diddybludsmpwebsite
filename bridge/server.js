@@ -123,7 +123,7 @@ if(obj.leaderboards&&typeof obj.leaderboards==='object'){
 }
 if(obj.levelShop && Array.isArray(obj.levelShop.offers)){
   const offers=obj.levelShop.offers.slice(0,40).map(o=>({id:clean(o.id,32),name:safeText(o.name,70),type:clean(o.type,20),cost:Number(o.cost)})).filter(o=>/^[a-z0-9_-]{1,32}$/.test(o.id)&&['rank','money','shards'].includes(o.type)&&Number.isInteger(o.cost)&&o.cost>0);
-  db.levelShop={offers,playtimeMinutes:Math.max(1,Number(obj.levelShop.playtimeMinutes)||30),moneyPerLevel:Math.max(1,Number(obj.levelShop.moneyPerLevel)||10000000)};
+  db.levelShop={offers,playtimeMinutes:Math.max(1,Number(obj.levelShop.playtimeMinutes)||30),moneyPerLevel:Math.max(1,Number(obj.levelShop.moneyPerLevel)||1000000),levelsPerInterval:Math.max(1,Number(obj.levelShop.levelsPerInterval)||50)};
 }
 for(const line of (Array.isArray(obj.chat)?obj.chat.slice(0,20):[])){const msg=safeText(line,240);if(msg)await send(chatId,'🎮 '+msg);}
 const ackIds=new Set((Array.isArray(obj.acks)?obj.acks:[]).slice(0,60).filter(id=>typeof id==='string'&&/^[0-9a-f-]{36}$/.test(id)));
