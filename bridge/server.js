@@ -143,6 +143,10 @@ if(req.method==='GET'&&url.pathname==='/interview.js'){
  res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
  res.end(fs.readFileSync(new URL('./interview.js',import.meta.url),'utf8'));return;
 }
+if(req.method==='GET'&&url.pathname==='/staff-tickets.js'){
+ res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+ res.end(fs.readFileSync(new URL('./staff-tickets.js',import.meta.url),'utf8'));return;
+}
 if(req.method==='GET'&&url.pathname==='/staff.js'){
  res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
  res.end(fs.readFileSync(new URL('./staff.js',import.meta.url),'utf8'));return;
