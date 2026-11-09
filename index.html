@@ -55,6 +55,7 @@
 <div class="command"><code>/sethome</code><span>Set a home</span></div><div class="command"><code>/tpa</code><span>Teleport request</span></div><div class="command"><code>/rtp</code><span>Random teleport</span></div><div class="command"><code>/spawn</code><span>Return to spawn</span></div>
 </div></div></section>
 <section id="join"><div class="container"><div class="join"><h2>Ready to join?</h2><p class="muted">Open Minecraft Java Edition, choose Multiplayer, and add Diddyblud Lifesteal.</p><div class="ip"><strong id="ip-text">Server address coming soon</strong></div><button id="copy-ip" class="btn alt" disabled>Copy server IP</button><p id="copy-status" class="status" role="status"></p></div></div></section>
+<section class="container" aria-label="Visitor count"><div class="box" style="text-align:center;max-width:440px;margin:auto"><h2 style="font-size:26px">Website Visitors</h2><p class="muted">Unique browsers counted since the counter was added</p><p class="price" id="visitor-count" style="font-size:36px;font-weight:800;color:#ff92aa;margin:8px 0">—</p></div></section>
 <section class="container" aria-label="Connection help"><p class="note">Having trouble loading stats, applications, or purchases? <a href="https://diddybludsmpwebsite.onrender.com/health" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Check Render connection</a>. If it does not show <code>"ok":true</code>, the backend service needs attention.</p></section></main><footer><div class="container">♥ Diddyblud Lifesteal • Independent Minecraft community, not affiliated with Mojang or Microsoft.</div></footer>
 <script>
 const CONFIG={serverIP:"diddybludslifesteal.falixsrv.me",bridgeURL:"https://diddybludsmpwebsite.onrender.com"};
@@ -182,6 +183,22 @@ document.getElementById('cash-order-form').addEventListener('submit',async event
   status.textContent=error instanceof TypeError?'Cannot connect to the server. Try again later.':error.message;
  }finally{button.disabled=false;}
 });
+async function updateVisitorCount(){
+ const el=document.getElementById('visitor-count');
+ try{
+  let visitorId;
+  try{
+   visitorId=localStorage.getItem('diddyblud-visitor-id');
+   if(!visitorId){visitorId=crypto.randomUUID();localStorage.setItem('diddyblud-visitor-id',visitorId);}
+  }catch(e){visitorId=null;}
+  const url=bridge+'/api/public/visitors';
+  const response=await (visitorId?fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:visitorId})}):fetch(url,{cache:'no-store'}));
+  if(!response.ok)throw Error('Unavailable');
+  const result=await response.json();
+  el.textContent=Number(result.total||0).toLocaleString();
+ }catch(e){el.textContent='Unavailable';}
+}
+updateVisitorCount();
 loadStats();loadLevelShop();loadLeaderboards();loadApplicationRoles();
 setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();}},30000);
 setInterval(()=>{if(!document.hidden)loadLevelShop();},10000);
