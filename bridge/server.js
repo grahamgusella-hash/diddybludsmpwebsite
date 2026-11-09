@@ -92,7 +92,7 @@ const ticketCategories=new Set(['General Support','Bug Report','Player Report','
 const ticketsIpLimit=new Map();
 const ticketRate=(ip,limit=12)=>{const now=Date.now(),prior=(ticketsIpLimit.get(ip)||[]).filter(x=>now-x<3600000);if(prior.length>=limit)return true;prior.push(now);ticketsIpLimit.set(ip,prior);if(ticketsIpLimit.size>10000)ticketsIpLimit.clear();return false;};
 const validPlayer=(s)=>/^[A-Za-z0-9_]{3,16}$/.test(s);
-const VALID_PRODUCTS={starter:'Starter Rank (legacy request)',champion:'Champion Rank (legacy request)',legend:'Legend Rank (legacy request)',reward:'Reward Request',cash_1m:'1 Million In-Game Money — $1 USD',cash_100m:'100 Million In-Game Money — $3 USD',prime_rank:'Prime Rank — price to be announced',legend_rank_paid:'Legend Rank — price to be announced'};
+const VALID_PRODUCTS={starter:'Starter Rank (legacy request)',champion:'Champion Rank (legacy request)',legend:'Legend Rank (legacy request)',reward:'Reward Request',cash_1m:'1 Million In-Game Money — $1 USD',cash_100m:'100 Million In-Game Money — $3 USD',prime_rank:'Prime Rank — $2.50 USD',legend_rank_paid:'Legend Rank — $5.00 USD'};
 const commands=[
 new SlashCommandBuilder().setName('mcannounce').setDescription('Send an announcement to Minecraft').addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)),
 new SlashCommandBuilder().setName('mckick').setDescription('Kick an online Minecraft player').addStringOption(o=>o.setName('player').setDescription('Player username').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false)),
