@@ -9,9 +9,10 @@ const secret=env('BRIDGE_SECRET');
 const token=env('DISCORD_TOKEN');
 if(!secret || secret.length<24 || !token){console.error('Set DISCORD_TOKEN and a random BRIDGE_SECRET of at least 24 characters.');process.exit(1);}
 const dataFile=env('DATA_FILE','./bridge-data.json');
-let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]},applicationRoles:[],tickets:[]};
+let db={players:[],online:0,updatedAt:null,orders:[],applications:[],queue:[],levelShop:null,leaderboards:{money:[],playtime:[],hearts:[]},applicationRoles:[],tickets:[],visitors:{total:0,seen:[]}};
 try{db={...db,...JSON.parse(fs.readFileSync(dataFile,'utf8'))};}catch(e){if(e.code!=='ENOENT')console.error('Could not read data file:',e.message);}
 if(!Array.isArray(db.tickets))db.tickets=[];
+if(!db.visitors||!Number.isSafeInteger(db.visitors.total)||!Array.isArray(db.visitors.seen))db.visitors={total:0,seen:[]};
 const save=()=>{try{const tmp=dataFile+'.tmp';fs.writeFileSync(tmp,JSON.stringify(db,null,2),{mode:0o600});fs.renameSync(tmp,dataFile);}catch(e){console.error('Data persistence failed:',e.message);}};
 const client=new Client({intents:[GatewayIntentBits.Guilds,GatewayIntentBits.GuildMessages,GatewayIntentBits.MessageContent]});
 const chatId=env('DISCORD_CHAT_CHANNEL_ID'),announcementId=env('DISCORD_ANNOUNCEMENTS_CHANNEL_ID');
@@ -21,6 +22,7 @@ const staffRole=env('DISCORD_STAFF_ROLE_ID');
 const bridgeUrl=env('PUBLIC_BRIDGE_URL','https://diddybludsmpwebsite.onrender.com');
 const discordClientSecret=env('DISCORD_CLIENT_SECRET');
 const guildId=env('DISCORD_GUILD_ID');
+const ownerDiscordId=env('DISCORD_OWNER_USER_ID');
 const sessions=new Map();
 const cookies=req=>Object.fromEntries(String(req.headers.cookie||'').split(';').map(x=>{const i=x.indexOf('=');return i<0?['','']:[x.slice(0,i).trim(),x.slice(i+1).trim()]}).filter(x=>x[0]));
 const makeCookie=(key,value,age)=>key+'='+value+'; Path=/; Max-Age='+age+'; Secure; HttpOnly; SameSite=Lax';
@@ -91,6 +93,15 @@ const ticketView=t=>({id:t.id,player:t.player,subject:t.subject,category:t.categ
 const ticketCategories=new Set(['General Support','Bug Report','Player Report','Appeal','Shop / Rank Help','Other']);
 const ticketsIpLimit=new Map();
 const ticketRate=(ip,limit=12)=>{const now=Date.now(),prior=(ticketsIpLimit.get(ip)||[]).filter(x=>now-x<3600000);if(prior.length>=limit)return true;prior.push(now);ticketsIpLimit.set(ip,prior);if(ticketsIpLimit.size>10000)ticketsIpLimit.clear();return false;};
+const seenVisitors=new Set(db.visitors.seen);
+const visitorsView=()=>({total:db.visitors.total});
+async function ownerSession(req){
+ const staff=await staffSession(req);
+ if(!staff)return null;
+ if(ownerDiscordId)return staff.id===ownerDiscordId?staff:null;
+ try{const guild=await client.guilds.fetch(guildId);return guild.ownerId===staff.id?staff:null;}catch{return null;}
+}
+const visitorFingerprint=(id)=>crypto.createHmac('sha256',secret).update(id).digest('hex');
 const validPlayer=(s)=>/^[A-Za-z0-9_]{3,16}$/.test(s);
 const VALID_PRODUCTS={starter:'Starter Rank (legacy request)',champion:'Champion Rank (legacy request)',legend:'Legend Rank (legacy request)',reward:'Reward Request',cash_1m:'1 Million In-Game Money — $1 USD',cash_100m:'100 Million In-Game Money — $3 USD',prime_rank:'Prime Rank — $2.50 USD',legend_rank_paid:'Legend Rank — $5.00 USD'};
 const commands=[
@@ -151,6 +162,10 @@ if(req.method==='GET'&&url.pathname==='/staff-tickets.js'){
  res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
  res.end(fs.readFileSync(new URL('./staff-tickets.js',import.meta.url),'utf8'));return;
 }
+if(req.method==='GET'&&url.pathname==='/owner.js'){
+ res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
+ res.end(fs.readFileSync(new URL('./owner.js',import.meta.url),'utf8'));return;
+}
 if(req.method==='GET'&&url.pathname==='/staff.js'){
  res.writeHead(200,{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});
  res.end(fs.readFileSync(new URL('./staff.js',import.meta.url),'utf8'));return;
@@ -183,6 +198,13 @@ if(req.method==='GET'&&url.pathname==='/auth/callback'){
 if(req.method==='POST'&&url.pathname==='/auth/logout'){
  const key=cookies(req).diddyblud_session;if(key)sessions.delete(key);
  redirect(res,'/staff',[makeCookie('diddyblud_session','',0)]);return;
+}
+if(req.method==='GET'&&url.pathname==='/api/owner/payments'){
+ const owner=await ownerSession(req);
+ if(!owner){staffReply(res,403,{error:'Owner access only. Sign in with the Discord server owner account or configured owner ID.'});return;}
+ const requests=db.orders.filter(o=>['cash_1m','cash_100m','prime_rank','legend_rank_paid'].includes(o.product));
+ // No payment processor exists: never treat submitted or staff-approved orders as paid.
+ staffReply(res,200,{verifiedGrossCents:0,availableCents:0,withdrawEnabled:false,requestCount:requests.length,requests:requests.slice(-100).reverse().map(o=>({id:o.id,player:o.player,product:o.product,status:o.status,createdAt:o.createdAt}))});return;
 }
 if(url.pathname.startsWith('/api/staff/')){
  const staff=await staffSession(req);
@@ -269,6 +291,23 @@ if(url.pathname.startsWith('/api/staff/')){
 if(req.method==='OPTIONS'){
   if(url.pathname.startsWith('/api/public/')){publicWriteReply(res,204,{});return;}
   reply(res,204,{},origin);return;
+}
+if(req.method==='GET'&&url.pathname==='/api/public/visitors'){publicReply(res,200,visitorsView());return;}
+if(req.method==='POST'&&url.pathname==='/api/public/visitors'){
+ try{
+  const data=await body(req),id=String(data.id||'');
+  if(!/^[a-zA-Z0-9-]{20,80}$/.test(id)){publicWriteReply(res,400,{error:'Invalid visitor token'});return;}
+  const hash=visitorFingerprint(id);
+  if(!seenVisitors.has(hash)){
+   seenVisitors.add(hash);
+   db.visitors.seen.push(hash);
+   db.visitors.total=Math.min(Number.MAX_SAFE_INTEGER,db.visitors.total+1);
+   // Retain at most 100,000 hashed browser IDs; total visits is preserved.
+   if(db.visitors.seen.length>100000){const removed=db.visitors.seen.shift();seenVisitors.delete(removed);}
+   save();
+  }
+  publicWriteReply(res,200,visitorsView());return;
+ }catch{publicWriteReply(res,400,{error:'Could not count visit'});return;}
 }
 if(req.method==='GET'&&url.pathname==='/health'){publicReply(res,200,{ok:true,discord:client.isReady(),serverLastSeen:db.updatedAt});return;}
 if(req.method==='GET'&&url.pathname==='/api/public/stats'){publicReply(res,200,{players:db.players,online:db.online,updatedAt:db.updatedAt});return;}
