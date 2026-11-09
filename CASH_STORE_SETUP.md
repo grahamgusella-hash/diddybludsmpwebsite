@@ -3,8 +3,8 @@
 The store section on GitHub Pages lists four items:
 - **1,000,000 in-game money — $1 USD**
 - **100,000,000 in-game money — $3 USD**
-- **Prime Rank — price not set**
-- **Legend Rank — price not set**
+- **Prime Rank — $2.50 USD**
+- **Legend Rank — $5.00 USD**
 
 The user request "1 for 1 dollar" was interpreted as 1 million in-game money for $1. Change the label and backend offer if that was not intended.
 
