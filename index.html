@@ -7,7 +7,7 @@
 @media(max-width:550px){.grid,.commands{grid-template-columns:1fr}.bar{flex-direction:column;padding:15px 0}.hero{padding:38px 0}section{padding:45px 0}.box{padding:19px}}
 </style></head>
 <body>
-<header><div class="container bar"><a href="#home" class="brand"><img src="assets/logo.webp" alt="" onerror="this.style.display=&#39;none&#39;"><span>DIDDYBLUD <span>LIFESTEAL</span></span></a><nav class="nav"><a href="#features">Features</a><a href="#level-shop">Level Shop</a><a href="#stats">Stats</a><a href="#leaderboards">Leaderboards</a><a href="#applications">Apply</a><a href="https://diddybludsmpwebsite.onrender.com/tickets">Tickets</a><a href="https://diddybludsmpwebsite.onrender.com/interview">Interview</a><a href="https://diddybludsmpwebsite.onrender.com/staff">Staff Reviews</a><a href="#commands">Commands</a><a href="#join">Join</a></nav></div></header>
+<header><div class="container bar"><a href="#home" class="brand"><img src="assets/logo.webp" alt="" onerror="this.style.display=&#39;none&#39;"><span>DIDDYBLUD <span>LIFESTEAL</span></span></a><nav class="nav"><a href="#features">Features</a><a href="#level-shop">Level Shop</a><a href="#cash-shop">Store</a><a href="#stats">Stats</a><a href="#leaderboards">Leaderboards</a><a href="#applications">Apply</a><a href="https://diddybludsmpwebsite.onrender.com/tickets">Tickets</a><a href="https://diddybludsmpwebsite.onrender.com/interview">Interview</a><a href="https://diddybludsmpwebsite.onrender.com/staff">Staff Reviews</a><a href="#commands">Commands</a><a href="#join">Join</a></nav></div></header>
 <main>
 <section class="hero" id="home"><div class="container hero-layout"><div><span class="pill">Minecraft Survival • Lifesteal SMP</span><h1>STEAL HEARTS.<br><span>RULE THE SMP.</span></h1><p class="muted">Fight for hearts, earn levels, and unlock special ranks and rewards. Your Diddyblud Lifesteal journey begins here.</p><div class="buttons"><a href="#join" class="btn">♥ Join the server</a><a href="#level-shop" class="btn alt">Explore Level Shop</a></div></div><div><img class="hero-logo" src="assets/logo.webp" alt="Diddyblud Lifesteal logo" onerror="this.style.display=&#39;none&#39;"></div></div></section>
 <section id="features"><div class="container"><div class="section-heading"><h2>Discover the server</h2><p class="muted">Custom gameplay, player progression, and a connected community.</p></div><div class="grid">
@@ -15,6 +15,30 @@
 <div class="card"><h3>🔥 Spawners</h3><p>Stack special spawners to grow resource farms.</p></div><div class="card"><h3>⚒ Custom Items</h3><p>Powerful tools, rockets, and useful custom items.</p></div><div class="card"><h3>🏡 Travel & Storage</h3><p>Homes, random teleportation, auctions, and vaults.</p></div></div></div></section>
 <section id="level-shop" class="band"><div class="container"><div class="section-heading"><h2>Spend your <span>levels</span></h2><p class="muted">Earn levels by playing or convert in-game money using <code>/levels buy</code>. Spend levels on your server's rewards — no real-money payment required.</p><p class="status" id="level-rates">Waiting for level-shop configuration from Minecraft…</p></div><div id="level-offers" class="grid"></div>
 <div class="box" style="max-width:680px;margin-top:25px"><h3>Redeem a rank or reward</h3><p class="muted">Ranks and rewards are automatically granted by your Minecraft plugin after it verifies your levels and one-time code. No staff approval is needed. Run <code>/levels code</code> in Minecraft, enter the code here within 5 minutes, and stay online to receive your reward.</p><form id="level-form"><label class="field">Minecraft username<input name="player" required maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Your Minecraft username"></label><label class="field">One-time code<input name="code" required minlength="10" maxlength="10" autocomplete="off" placeholder="10-character in-game code"></label><label class="field">Rank or reward<select id="level-offer" name="offer" required><option value="">Waiting for server…</option></select></label><button id="level-submit" class="btn" type="submit" disabled>Buy on Website</button><p id="level-feedback" class="status" role="status" aria-live="polite"></p></form></div></div></section>
+<section id="cash-shop" class="band"><div class="container">
+<div class="section-heading"><h2>Server <span>Store</span></h2>
+<p class="muted">Optional real-money items. These are purchase inquiries only until a secure payment provider is connected. The website does not charge you or automatically deliver items.</p></div>
+<div class="grid" id="cash-products">
+<article class="card"><h3>💰 1 Million</h3><p>1,000,000 in-game dollars</p><p class="price">$1 USD</p><button type="button" class="btn cash-request" data-product="cash_1m">Request Purchase</button></article>
+<article class="card"><h3>💎 100 Million</h3><p>100,000,000 in-game dollars</p><p class="price">$3 USD</p><button type="button" class="btn cash-request" data-product="cash_100m">Request Purchase</button></article>
+<article class="card"><h3>👑 Prime Rank</h3><p>Premium server rank</p><p class="price">Price coming soon</p><button type="button" class="btn alt cash-request" data-product="prime_rank">Ask About Rank</button></article>
+<article class="card"><h3>🏆 Legend Rank</h3><p>Premium server rank</p><p class="price">Price coming soon</p><button type="button" class="btn alt cash-request" data-product="legend_rank_paid">Ask About Rank</button></article>
+</div>
+<div class="box" style="max-width:680px;margin-top:24px"><h3>Request an item</h3>
+<p class="note">Choose an item, then send a request to staff. This is not checkout, a completed purchase, or proof of payment. Do not enter card details here.</p>
+<form id="cash-order-form">
+<label class="field">Minecraft username<input name="player" required maxlength="16" pattern="[A-Za-z0-9_]{3,16}" placeholder="Your Minecraft username"></label>
+<label class="field">Discord username<input name="discord" required maxlength="80" placeholder="Your Discord username"></label>
+<label class="field">Item<select name="product" id="cash-product" required>
+<option value="">Choose a product</option>
+<option value="cash_1m">1 Million — $1 USD</option>
+<option value="cash_100m">100 Million — $3 USD</option>
+<option value="prime_rank">Prime Rank — price coming soon</option>
+<option value="legend_rank_paid">Legend Rank — price coming soon</option>
+</select></label>
+<button type="submit" class="btn">Send Request to Staff</button>
+<p id="cash-order-status" class="status" role="status" aria-live="polite"></p>
+</form></div></div></section>
 <section id="stats"><div class="container"><div class="section-heading"><h2>Online player stats</h2><p id="stats-state" class="muted">Waiting for your Minecraft server…</p></div><div id="player-stats" class="box"></div></div></section>
 <section id="leaderboards" class="band"><div class="container"><div class="section-heading"><h2>🏆 Server <span>leaderboards</span></h2><p class="muted">Top 10 players across the server, including players who are offline. Leaderboard wipes in Minecraft are reflected here.</p><p id="leaderboards-state" class="status">Loading leaderboard rankings…</p></div><div class="grid">
 <div class="card"><h3>💰 Richest Players</h3><div id="leaders-money"></div></div>
@@ -138,6 +162,26 @@ try{const request=Object.fromEntries(new FormData(form));const r=await fetch(bri
 });
 for(const [formId,endpoint] of [['application-form','applications']]){
 const form=document.getElementById(formId);form.addEventListener('submit',async e=>{e.preventDefault();const btn=form.querySelector('button'),out=form.querySelector('.status');btn.disabled=true;out.textContent='Submitting…';try{const req=Object.fromEntries(new FormData(form));const r=await fetch(bridge+'/api/public/'+endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(req)});const data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');out.textContent='Submitted. Reference: '+data.id;form.reset();}catch(err){out.textContent=err instanceof TypeError?'Could not connect to Render. Open the server connection link below to check whether it is online, then retry.':(err.message||'Request failed');}finally{btn.disabled=false;}});}
+const cashProduct=document.getElementById('cash-product');
+document.querySelectorAll('.cash-request').forEach(button=>button.addEventListener('click',()=>{
+ cashProduct.value=button.dataset.product;
+ document.getElementById('cash-order-form').scrollIntoView({behavior:'smooth',block:'center'});
+}));
+document.getElementById('cash-order-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const form=event.currentTarget,button=form.querySelector('button[type="submit"]'),status=document.getElementById('cash-order-status');
+ const data=Object.fromEntries(new FormData(form));
+ button.disabled=true;status.textContent='Sending request to staff…';
+ try{
+  const response=await fetch(bridge+'/api/public/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+  const result=await response.json();
+  if(!response.ok)throw Error(result.error||'Request failed');
+  status.textContent='Request #'+result.id+' sent. No payment was collected. Staff will need to arrange payment and delivery separately.';
+  form.reset();
+ }catch(error){
+  status.textContent=error instanceof TypeError?'Cannot connect to the server. Try again later.':error.message;
+ }finally{button.disabled=false;}
+});
 loadStats();loadLevelShop();loadLeaderboards();loadApplicationRoles();
 setInterval(()=>{if(!document.hidden){loadStats();loadLeaderboards();loadApplicationRoles();}},30000);
 setInterval(()=>{if(!document.hidden)loadLevelShop();},10000);
