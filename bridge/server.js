@@ -92,7 +92,7 @@ const ticketCategories=new Set(['General Support','Bug Report','Player Report','
 const ticketsIpLimit=new Map();
 const ticketRate=(ip,limit=12)=>{const now=Date.now(),prior=(ticketsIpLimit.get(ip)||[]).filter(x=>now-x<3600000);if(prior.length>=limit)return true;prior.push(now);ticketsIpLimit.set(ip,prior);if(ticketsIpLimit.size>10000)ticketsIpLimit.clear();return false;};
 const validPlayer=(s)=>/^[A-Za-z0-9_]{3,16}$/.test(s);
-const VALID_PRODUCTS={starter:'Starter Rank',champion:'Champion Rank',legend:'Legend Rank',reward:'Reward Request'};
+const VALID_PRODUCTS={starter:'Starter Rank (legacy request)',champion:'Champion Rank (legacy request)',legend:'Legend Rank (legacy request)',reward:'Reward Request',cash_1m:'1 Million In-Game Money — $1 USD',cash_100m:'100 Million In-Game Money — $3 USD',prime_rank:'Prime Rank — price to be announced',legend_rank_paid:'Legend Rank — price to be announced'};
 const commands=[
 new SlashCommandBuilder().setName('mcannounce').setDescription('Send an announcement to Minecraft').addStringOption(o=>o.setName('message').setDescription('Message').setRequired(true)),
 new SlashCommandBuilder().setName('mckick').setDescription('Kick an online Minecraft player').addStringOption(o=>o.setName('player').setDescription('Player username').setRequired(true)).addStringOption(o=>o.setName('reason').setDescription('Reason').setRequired(false)),
@@ -113,7 +113,11 @@ if(!order){await i.reply({content:'Order ID not found.',ephemeral:true});return;
 if(order.status!=='pending'){await i.reply({content:'Request has already been processed.',ephemeral:true});return;}
 if(name==='rejectorder'){order.status='rejected';order.staff=i.user.id;save();await i.reply({content:'Request rejected.',ephemeral:true});return;}
 order.status='approved';order.staff=i.user.id;
-if(order.product==='reward'){save();await i.reply({content:'Marked approved. Reward requests have no automatic in-game action; deliver manually.',ephemeral:true});return;}
+if(['reward','cash_1m','cash_100m','prime_rank','legend_rank_paid'].includes(order.product)){
+ save();
+ await i.reply({content:'Marked approved for manual fulfillment. No payment was collected by this website. Verify payment independently and deliver the item in Minecraft; this command does not grant it automatically.',ephemeral:true});
+ return;
+}
 const rank={starter:'starter',champion:'champion',legend:'legend'}[order.product];
 enqueue({type:'rank',player:order.player,rank});
 await i.reply({content:'Rank grant queued. **Confirm delivery in-game.** Ensure this request was separately verified before approval.',ephemeral:true});
@@ -379,7 +383,7 @@ const id=crypto.randomUUID().slice(0,8);
 if(url.pathname.endsWith('/applications')){const role=clean(v.role,40);if(!db.applicationRoles.some(r=>r.id===role)||notes.length<15){publicWriteReply(res,400,{error:'Choose a role and write at least 15 characters.'});return;}db.applications.push({id,player,discord,role,notes,status:'pending',createdAt:new Date().toISOString()});db.applications=db.applications.slice(-500);save();await send(appId,'📋 **Application #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nRole: '+role+'\n'+notes);publicWriteReply(res,201,{ok:true,id});return;}
 const product=clean(v.product,24);if(!Object.hasOwn(VALID_PRODUCTS,product)){publicWriteReply(res,400,{error:'Invalid request type'});return;}
 db.orders.push({id,player,discord,product,status:'pending',createdAt:new Date().toISOString()});db.orders=db.orders.slice(-500);save();
-await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must verify eligibility before /approveorder.');
+await send(ordersId,'🛒 **Unpaid / unverified request #'+id+'**\nMinecraft: '+player+'\nDiscord: '+safeText(discord,80)+'\nItem: '+VALID_PRODUCTS[product]+'\n**No payment was collected or verified.** Staff must independently arrange and confirm payment, then fulfill manually. /approveorder records staff review only for the new cash shop items.');
 publicWriteReply(res,201,{ok:true,id,message:'Request submitted. This is not a purchase or payment confirmation.'});return;
 }catch(e){publicWriteReply(res,400,{error:'Invalid submission: '+e.message});return;}
 }
