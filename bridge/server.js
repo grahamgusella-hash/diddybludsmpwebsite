@@ -1,6 +1,7 @@
 import http from 'node:http';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
+import { createWalletHandler } from './wallet.js';
 import { Client, GatewayIntentBits, Events, REST, Routes, SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
 
 const env=(key,fallback='')=>process.env[key]||fallback;
@@ -134,9 +135,11 @@ enqueue({type:'rank',player:order.player,rank});
 await i.reply({content:'Rank grant queued. **Confirm delivery in-game.** Ensure this request was separately verified before approval.',ephemeral:true});
 });
 client.login(token).catch(e=>console.error('Discord login failed:',e.message));
+const handleWallet=createWalletHandler({verify,body,bridgeUrl});
 const server=http.createServer(async(req,res)=>{
 const origin=req.headers.origin;
 const url=new URL(req.url,'http://localhost');
+if(await handleWallet(req,res,url))return;
 
 if(req.method==='GET'&&url.pathname==='/tickets'){
  res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'"});
